@@ -1,3 +1,4 @@
+'use client'
 import React, { useState, useEffect } from 'react';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
@@ -20,7 +21,7 @@ export default function CategoryManagement() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:8000/api/categories');
+            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories');
             if (!response.ok) throw new Error('Failed to fetch categories');
             const data = await response.json();
             setCategories(data);
@@ -37,7 +38,7 @@ export default function CategoryManagement() {
             try {
                 await Promise.all(
                     selectedCategories.map((categoryId) =>
-                        fetch(`http://localhost:8000/api/categories/${categoryId}`, {
+                        fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${categoryId}`, {
                             method: 'DELETE',
                             headers: {
                                 Authorization: token ? `Bearer ${token}` : '',
@@ -58,7 +59,7 @@ export default function CategoryManagement() {
         if (window.confirm('Are you sure you want to delete this category?')) {
             const token = getToken();
             try {
-                await fetch(`http://localhost:8000/api/categories/${categoryId}`, {
+                await fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${categoryId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',

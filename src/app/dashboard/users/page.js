@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/app/auth';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://mern-ordring-food-backend.onrender.com';
 export default function Users() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUsers, setSelectedUsers] = useState([]);

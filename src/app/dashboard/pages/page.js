@@ -36,7 +36,7 @@ export default function Post() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`http://localhost:8000/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
+            const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : '',
                 },
@@ -63,7 +63,7 @@ export default function Post() {
             try {
                 await Promise.all(
                     selectedPosts.map((postId) =>
-                        fetch(`http://localhost:8000/api/pages/${postId}`, {
+                        fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${postId}`, {
                             method: 'DELETE',
                             headers: {
                                 Authorization: token ? `Bearer ${token}` : '',
@@ -83,7 +83,7 @@ export default function Post() {
     const deletePage = async (pageId) => {
         if (window.confirm('Are you sure you want to delete this page?')) {
             try {
-                await fetch(`http://localhost:8000/api/pages/${pageId}`, {
+                await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${pageId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',

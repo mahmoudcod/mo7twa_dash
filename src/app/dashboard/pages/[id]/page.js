@@ -23,7 +23,7 @@ export default function EditPage({ params }) {
             setLoading(true);
             setErrorMessage(null);
             try {
-                const response = await fetch(`http://localhost:8000/api/pages/${id}`, {
+                const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',
                     },
@@ -48,7 +48,7 @@ export default function EditPage({ params }) {
         const fetchCategories = async () => {
             const token = getToken();
             try {
-                const response = await fetch('http://localhost:8000/api/categories', {
+                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',
                     },
@@ -89,7 +89,7 @@ export default function EditPage({ params }) {
             }
             formData.append('category', pageData.category); // Category ID is included
 
-            const response = await fetch(`http://localhost:8000/api/pages/${id}`, {
+            const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
                 method: 'PUT',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : '',

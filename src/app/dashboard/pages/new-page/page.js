@@ -17,7 +17,7 @@ export default function CreatePage() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch('http://localhost:8000/api/categories'); // Adjust the endpoint to your API
+                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories'); // Adjust the endpoint to your API
                 if (!response.ok) throw new Error('Failed to fetch categories');
                 const data = await response.json();
                 setCategories(data); // Assuming the response is an array of categories
@@ -54,7 +54,7 @@ export default function CreatePage() {
                 formData.append('image', pageData.image);
             }
 
-            const response = await fetch('http://localhost:8000/api/pages', {
+            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages', {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : '',
