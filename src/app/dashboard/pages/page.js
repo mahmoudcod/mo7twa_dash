@@ -25,20 +25,29 @@ export default function Post() {
 
     useEffect(() => {
         const fetchToken = async () => {
-            const fetchedToken = getToken();
-            setToken(fetchedToken);
-            await fetchPages(fetchedToken);
+            try {
+                const fetchedToken = getToken();
+                setToken(fetchedToken);
+            } catch (err) {
+                setError('Failed to fetch token');
+            }
         };
         fetchToken();
     }, [getToken]);
 
-    const fetchPages = async (token) => {
+    useEffect(() => {
+        if (token) {
+            fetchPages();
+        }
+    }, [currentPage, token]);
+
+    const fetchPages = async () => {
         setLoading(true);
         setError(null);
         try {
             const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
-                    Authorization: token ? `Bearer ${token}` : '',
+                    Authorization: `Bearer ${token}`,
                 },
             });
             if (!response.ok) throw new Error('Failed to fetch pages');
@@ -51,13 +60,6 @@ export default function Post() {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        if (token) {
-            fetchPages(token);
-        }
-    }, [currentPage, token]);
-
     const deleteSelectedPosts = async () => {
         if (window.confirm('Are you sure you want to delete selected pages?')) {
             try {
@@ -66,16 +68,16 @@ export default function Post() {
                         fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${postId}`, {
                             method: 'DELETE',
                             headers: {
-                                Authorization: token ? `Bearer ${token}` : '',
+                                Authorization: `Bearer ${token}`,
                             },
                         })
                     )
                 );
                 setSelectedPosts([]);
                 setDeleteSuccess(true);
-                fetchPages(token);
+                fetchPages();
             } catch (error) {
-                console.error('Error deleting selected pages:', error.message);
+                setError('Error deleting selected pages');
             }
         }
     };
@@ -86,13 +88,13 @@ export default function Post() {
                 await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${pageId}`, {
                     method: 'DELETE',
                     headers: {
-                        Authorization: token ? `Bearer ${token}` : '',
+                        Authorization: `Bearer ${token}`,
                     },
                 });
                 setDeleteSuccess(true);
-                fetchPages(token);
+                fetchPages();
             } catch (error) {
-                console.error('Error deleting page:', error.message);
+                setError('Error deleting page');
             }
         }
     };
@@ -159,9 +161,8 @@ export default function Post() {
                                     />
                                 </td>
                                 <td>{item.name}</td>
-                                <td>{item.description}</td>
+                                <td>{item.description.slice(0, 100)}</td>
                                 <td>{item.category ? item.category.name : 'N/A'}</td>
-                                {/* <td>{item.user ? item.user.email : 'N/A'}</td> */}
                                 <td>
                                     {item.image && <img src={item.image} alt={item.name} style={{ width: '50px' }} />}
                                 </td>

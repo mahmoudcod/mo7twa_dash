@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete } from "react-icons/md";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import Link from 'next/link';
+import { FaEye } from "react-icons/fa";
 import { useAuth } from '@/app/auth';
 import axios from 'axios';
 
 const API_BASE_URL = 'https://mern-ordring-food-backend.onrender.com';
+
 export default function Users() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUsers, setSelectedUsers] = useState([]);
@@ -16,8 +18,11 @@ export default function Users() {
     const { getToken } = useAuth();
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [loadingAccess, setLoadingAccess] = useState({}); // Track loading state for each user
     const pageSize = 30;
-    const [token, setToken] = useState(null); // New state for the token
+    const [token, setToken] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [userProducts, setUserProducts] = useState({}); // Track products for each user
 
     useEffect(() => {
         const fetchToken = () => {
@@ -28,11 +33,13 @@ export default function Users() {
     }, [getToken]);
 
     useEffect(() => {
-        if (token) { // Only fetch users if the token is available
+        if (token) {
             fetchUsers();
+            fetchProducts();
         }
-    }, [currentPage, token]); // Depend on token as well
+    }, [currentPage, token]);
 
+    // Fetch users with their products
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -43,8 +50,23 @@ export default function Users() {
                     limit: pageSize,
                 },
             });
-            setUsers(response.data.users); // Assuming your API returns a structure with users
-            setTotalCount(response.data.totalCount); // Assuming your API returns totalCount
+            setUsers(response.data.users);
+            setTotalCount(response.data.totalCount);
+
+            // Fetch product access for each user
+            const productAccess = {};
+            await Promise.all(response.data.users.map(async (user) => {
+                try {
+                    const productsResponse = await axios.get(`${API_BASE_URL}/api/auth/admin/users/${user._id}/products`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    productAccess[user._id] = productsResponse.data.products;
+                } catch (error) {
+                    console.error(`Error fetching products for user ${user._id}:`, error);
+                    productAccess[user._id] = [];
+                }
+            }));
+            setUserProducts(productAccess);
         } catch (error) {
             setErrorMessage("خطأ في جلب المستخدمين: " + error.message);
         } finally {
@@ -52,7 +74,54 @@ export default function Users() {
         }
     };
 
+    const fetchProducts = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/products`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProducts(response.data.products);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    };
 
+    // Enhanced assignProductToUser with loading state and better error handling
+    const assignProductToUser = async (userId, productId) => {
+        if (!productId) return; // Don't proceed if no product is selected
+
+        setLoadingAccess({ ...loadingAccess, [userId]: true });
+        setErrorMessage(null);
+        setSuccessMessage(null);
+
+        try {
+            // Check if user already has access to this product
+            const userCurrentProducts = userProducts[userId] || [];
+            if (userCurrentProducts.some(p => p._id === productId)) {
+                setErrorMessage("المستخدم لديه بالفعل حق الوصول إلى هذا المنتج");
+                return;
+            }
+
+            const response = await axios.post(
+                `${API_BASE_URL}/api/products/${productId}/grant-access`,
+                { userId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setSuccessMessage(`تم منح الوصول للمنتج بنجاح`);
+
+            // Update local state with new product access
+            setUserProducts(prev => ({
+                ...prev,
+                [userId]: [...(prev[userId] || []), response.data.product]
+            }));
+
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || error.message;
+            setErrorMessage(`خطأ أثناء منح الوصول للمنتج: ${errorMsg}`);
+        } finally {
+            setLoadingAccess({ ...loadingAccess, [userId]: false });
+        }
+    };
     const handleDeleteUser = async (userId) => {
         setErrorMessage(null);
         setSuccessMessage(null);
@@ -66,7 +135,6 @@ export default function Users() {
             setErrorMessage("خطأ أثناء الحذف: " + error.message);
         }
     };
-
     const confirmUser = async (userId) => {
         try {
             await axios.post(`${API_BASE_URL}/api/auth/admin/confirm-user/${userId}`, {}, {
@@ -78,6 +146,7 @@ export default function Users() {
             setErrorMessage("خطأ أثناء تأكيد المستخدم: " + error.message);
         }
     };
+
 
     const toggleUserSelection = (userId) => {
         if (selectedUsers.includes(userId)) {
@@ -154,14 +223,13 @@ export default function Users() {
         }
     };
 
-    if (loading) return <div>جاري التحميل...</div>;
+    if (loading) return <div className="loading-spinner">جاري التحميل...</div>;
 
     return (
         <>
             <main className="head">
                 <div className="head-title">
                     <h3 className="title">المستخدمين: {totalCount}</h3>
-                    {/* <Link href="/dashboard/users/new-user" className="addButton">إضافة مستخدم جديد</Link> */}
                 </div>
 
                 {selectedUsers.length > 0 && (
@@ -182,7 +250,8 @@ export default function Users() {
                                 <th>رقم الهاتف</th>
                                 <th>الدولة</th>
                                 <th>مؤكد</th>
-                                <th>تاريخ الإنشاء</th>
+                                <th>المنتجات الحالية</th>
+                                <th>إضافة منتج</th>
                                 <th>الإعدادات</th>
                             </tr>
                         </thead>
@@ -194,12 +263,42 @@ export default function Users() {
                                     <td>{user.phone}</td>
                                     <td>{user.country}</td>
                                     <td>{user.isConfirmed ? 'نعم' : 'لا'}</td>
-                                    <td>{formatArabicDate(user.createdAt)}</td>
                                     <td>
-                                        {/* <Link href={`/dashboard/users/${user._id}`}>
-                                            <MdOutlineEdit style={{ color: "#4D4F5C" }} />
-                                        </Link> */}
-                                        <RiDeleteBin6Line onClick={() => handleDeleteUser(user._id)} className='delete' style={{ margin: "0px 10px" }} />
+                                        <div className="current-products">
+                                            {userProducts[user._id]?.map(product => (
+                                                <span key={product._id} className="product-tag">
+                                                    {product.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="product-assign-container">
+                                            <select
+                                                onChange={(e) => assignProductToUser(user._id, e.target.value)}
+                                                disabled={loadingAccess[user._id]}
+                                                defaultValue=""
+                                                className="product-select"
+                                            >
+                                                <option value="">اختر المنتج</option>
+                                                {products
+                                                    .filter(product => !userProducts[user._id]?.some(p => p._id === product._id))
+                                                    .map((product) => (
+                                                        <option key={product._id} value={product._id}>
+                                                            {product.name}
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                            {loadingAccess[user._id] && <span className="loading-indicator">...</span>}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <RiDeleteBin6Line
+                                            onClick={() => handleDeleteUser(user._id)}
+                                            className='delete'
+                                            style={{ margin: "0px 10px" }}
+                                        />
+                                        <FaEye />
                                         {!user.isConfirmed && (
                                             <button onClick={() => confirmUser(user._id)}>تأكيد</button>
                                         )}
@@ -211,9 +310,13 @@ export default function Users() {
                 </div>
 
                 <div className="pagination">
-                    <button className='arrow' onClick={prevPage} disabled={currentPage === 1}><MdKeyboardArrowRight /></button>
+                    <button className='arrow' onClick={prevPage} disabled={currentPage === 1}>
+                        <MdKeyboardArrowRight />
+                    </button>
                     {pageNumbers}
-                    <button className='arrow' onClick={nextPage} disabled={currentPage === totalPages}><MdKeyboardArrowLeft /></button>
+                    <button className='arrow' onClick={nextPage} disabled={currentPage === totalPages}>
+                        <MdKeyboardArrowLeft />
+                    </button>
                 </div>
             </main>
         </>

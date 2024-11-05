@@ -525,3 +525,55 @@ textarea {
         margin-top: 5px;
     } */
 }
+
+
+.selected-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.selected-category {
+    display: flex;
+    align-items: center;
+    background-color: #e0e0e0;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.selected-category button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 4px;
+}
+
+
+.current-products {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.product-tag {
+    background: #e0e0e0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.product-assign-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.product-select {
+    min-width: 150px;
+}
+
+.loading-indicator {
+    color: #666;
+}

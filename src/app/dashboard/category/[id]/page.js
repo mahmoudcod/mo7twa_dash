@@ -1,86 +1,93 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@apollo/client';
-import gql from 'graphql-tag';
 import { useAuth } from '@/app/auth';
 
-const GET_TAG = gql`
-  query getTag($id: ID!) {
-    tag(id: $id) {
-      id
-      name
-    }
-  }
-`;
-
-const UPDATE_TAG = gql`
-  mutation updateTag(
-    $id: ID!
-    $name: String!
-  ) {
-    updateTag(
-      input: {
-        where: { id: $id }
-        data: {
-          name: $name
-        }
-      }
-    ) {
-      tag {
-        id
-      }
-    }
-  }
-`;
-
-const EditTagPage = ({ params }) => {
-  const router = useRouter();
-  const { getToken } = useAuth();
-  const token = getToken();
-  const id = params.id;
-
-  const [name, setName] = useState('');
+export default function EditCategory({ params }) {
+  const [categoryData, setCategoryData] = useState({
+    name: '',
+    pages: []
+  });
+  const [availablePages, setAvailablePages] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { loading, error, data } = useQuery(GET_TAG, {
-    variables: { id: id },
-  });
-
-  const [updateTag] = useMutation(UPDATE_TAG, {
-    context: {
-      headers: {
-        authorization: token ? `Bearer ${token}` : '',
-      },
-    },
-  });
+  const { getToken } = useAuth();
+  const router = useRouter();
+  const { id } = params;
 
   useEffect(() => {
-    if (!loading && data) {
-      const tag = data.tag;
-      setName(tag.name);
-    }
-  }, [loading, data]);
+    const fetchCategoryAndPages = async () => {
+      try {
+        const token = getToken();
+        const [categoryResponse, pagesResponse] = await Promise.all([
+          fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('https://mern-ordring-food-backend.onrender.com/api/pages/my-pages', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ]);
+
+        if (!categoryResponse.ok || !pagesResponse.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const [categoryData, pagesData] = await Promise.all([
+          categoryResponse.json(),
+          pagesResponse.json()
+        ]);
+
+        setCategoryData({
+          name: categoryData.name,
+          pages: categoryData.pages.map(page => page._id)
+        });
+        setAvailablePages(pagesData);
+      } catch (err) {
+        setErrorMessage("Error fetching data: " + err.message);
+      }
+    };
+
+    fetchCategoryAndPages();
+  }, [id, getToken]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCategoryData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handlePageSelection = (e) => {
+    const selectedPages = Array.from(e.target.selectedOptions, option => option.value);
+    setCategoryData(prevData => ({ ...prevData, pages: selectedPages }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const token = getToken();
+    setLoading(true);
     setErrorMessage(null);
-    setIsLoading(true);
+    setSuccessMessage(null);
+
     try {
-      await updateTag({
-        variables: {
-          id,
-          name,
+      const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(categoryData),
       });
-      setSuccessMessage("تم تعديل العلامة بنجاح");
-      router.push(`/dashboard/tags`);
-    } catch (error) {
-      setErrorMessage("خطأ أثناء تعديل العلامة: " + error.message);
+
+      if (!response.ok) {
+        throw new Error('Failed to update the category');
+      }
+
+      setSuccessMessage("Category updated successfully");
+      router.push('/dashboard/category');
+    } catch (err) {
+      setErrorMessage("Error updating the category: " + err.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -88,22 +95,45 @@ const EditTagPage = ({ params }) => {
     <>
       <main className="head">
         <div className="head-title">
-          <h3 className="title">تعديل علامة: {name}</h3>
+          <h3 className="title">Edit Category</h3>
         </div>
         {errorMessage && <div className="error-message">{errorMessage}</div>}
         {successMessage && <div className="success-message">{successMessage}</div>}
         <form className="content" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>اسم العلامة:</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+            <label>Category Name:</label>
+            <input
+              type="text"
+              name="name"
+              value={categoryData.name}
+              onChange={handleInputChange}
+              required
+            />
           </div>
-          <button className='sub-button' type="submit" disabled={isLoading}>
-            {isLoading ? 'جاري التعديل...' : 'حفظ التغييرات'}
+          <div className="form-group">
+            <label>Select Pages:</label>
+            <select
+              multiple
+              name="pages"
+              value={categoryData.pages}
+              onChange={handlePageSelection}
+            >
+              {Array.isArray(availablePages) && availablePages.length > 0 ? (
+                availablePages.map((page) => (
+                  <option key={page._id} value={page._id}>
+                    {page.name}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No pages available</option>
+              )}
+            </select>
+          </div>
+          <button className='sub-button' type="submit" disabled={loading}>
+            {loading ? 'Updating...' : 'Update Category'}
           </button>
         </form>
       </main>
     </>
   );
-};
-
-export default EditTagPage;
+}

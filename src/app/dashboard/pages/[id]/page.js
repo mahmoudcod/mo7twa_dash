@@ -1,24 +1,29 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
+import MarkdownIt from 'markdown-it';
+import MdEditor from 'react-markdown-editor-lite';
+import 'react-markdown-editor-lite/lib/index.css';
+
+const mdParser = new MarkdownIt();
 
 export default function EditPage({ params }) {
-    const { id } = params; // Get the page id from the route params
-    const [pageData, setPageData] = useState({ name: '', description: '', image: null, category: '', instructions: '' });
-    const [categories, setCategories] = useState([]); // State to store the available categories
+    const { id } = params;
+    const [pageData, setPageData] = useState({ name: '', description: '', image: null, category: [], instructions: '' });
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const { getToken } = useAuth();
     const router = useRouter();
+    const [token, setToken] = useState(null);
 
     useEffect(() => {
         const token = getToken();
+        setToken(token);
 
-        // Fetch the page data
         const fetchPage = async () => {
             setLoading(true);
             setErrorMessage(null);
@@ -34,8 +39,8 @@ export default function EditPage({ params }) {
                     name: data.name,
                     description: data.description,
                     image: data.image,
-                    category: data.category,
-                    instructions: data.userInstructions // Load user instructions as well
+                    category: Array.isArray(data.categoyr) ? data.category : [],
+                    instructions: data.userInstructions
                 });
             } catch (err) {
                 setErrorMessage(err.message);
@@ -44,9 +49,7 @@ export default function EditPage({ params }) {
             }
         };
 
-        // Fetch the categories data
         const fetchCategories = async () => {
-            const token = getToken();
             try {
                 const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
                     headers: {
@@ -55,19 +58,52 @@ export default function EditPage({ params }) {
                 });
                 if (!response.ok) throw new Error('Failed to fetch categories');
                 const data = await response.json();
-                setCategories(data); // Store the fetched categories
+
+                if (Array.isArray(data.categories)) {
+                    setCategories(data.categories);
+                } else {
+                    throw new Error('Categories data is not an array');
+                }
             } catch (err) {
                 setErrorMessage(err.message);
             }
         };
 
-        fetchPage();
-        fetchCategories();
-    }, [id, getToken]);
+        if (token) {
+            fetchPage();
+            fetchCategories();
+        }
+    }, [id, getToken, token]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setPageData((prevData) => ({ ...prevData, [name]: value }));
+    };
+
+    // const handleCategoryChange = (e) => {
+    //     const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    //     setPageData(prevData => ({ ...prevData, category: selectedOptions }));
+    // };
+    const handleCategoryCheckboxChange = (e, categoryId) => {
+        if (e.target.checked) {
+            // Add category if checked
+            setPageData(prevData => ({
+                ...prevData,
+                category: [...prevData.category, categoryId]
+            }));
+        } else {
+            // Remove category if unchecked
+            setPageData(prevData => ({
+                ...prevData,
+                category: prevData.category.filter(id => id !== categoryId)
+            }));
+        }
+    };
+
+
+
+    const handleDescriptionChange = ({ text }) => {
+        setPageData((prevData) => ({ ...prevData, description: text }));
     };
 
     const handleImageChange = (e) => {
@@ -76,18 +112,22 @@ export default function EditPage({ params }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = getToken();
         setErrorMessage(null);
         setIsLoading(true);
         try {
             const formData = new FormData();
             formData.append('name', pageData.name);
             formData.append('description', pageData.description);
-            formData.append('instructions', pageData.instructions); // Include user instructions
+            formData.append('instructions', pageData.instructions);
+
+            // Append the categories as an array of IDs
+            pageData.category.forEach(categoryId => {
+                formData.append('category', categoryId);  // Assuming the backend accepts multiple 'category' fields
+            });
+
             if (pageData.image) {
                 formData.append('image', pageData.image);
             }
-            formData.append('category', pageData.category); // Category ID is included
 
             const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
                 method: 'PUT',
@@ -109,6 +149,7 @@ export default function EditPage({ params }) {
             setIsLoading(false);
         }
     };
+
 
     if (loading) return <p>Loading...</p>;
     if (errorMessage) return <p>Error: {errorMessage}</p>;
@@ -132,13 +173,14 @@ export default function EditPage({ params }) {
                             required
                         />
                     </div>
-                    <div className="form-group">
+                    <div className="form-group" style={{ width: '100%' }}>
                         <label>Description:</label>
-                        <textarea
+                        <MdEditor
                             value={pageData.description}
-                            name="description"
-                            onChange={handleInputChange}
-                            required
+                            style={{ height: '300px' }}
+                            renderHTML={(text) => mdParser.render(text)}
+                            onChange={handleDescriptionChange}
+                            view={{ html: false }}  // This disables the preview
                         />
                     </div>
                     <div className="form-group">
@@ -158,22 +200,24 @@ export default function EditPage({ params }) {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Category:</label>
-                        <select
-                            name="category"
-                            value={pageData.category}
-                            onChange={handleInputChange}
-                            required
-                        >
-                            <option value="">Select a category</option>
+                        <label>Categories:</label>
+                        <div>
                             {categories.map((category) => (
-                                <option key={category.id} value={category._id}>
-                                    {category.name}
-                                </option>
+                                <div key={category._id}>
+                                    <input
+                                        type="checkbox"
+                                        id={category._id}
+                                        value={category._id}
+                                        checked={pageData.category.includes(category._id)}
+                                        onChange={(e) => handleCategoryCheckboxChange(e, category._id)}
+                                    />
+                                    <label htmlFor={category._id}>{category.name}</label>
+                                </div>
                             ))}
-                        </select>
-
+                        </div>
                     </div>
+
+
                     <button className='sub-button' type="submit" disabled={isLoading}>
                         {isLoading ? 'Updating...' : 'Save Changes'}
                     </button>

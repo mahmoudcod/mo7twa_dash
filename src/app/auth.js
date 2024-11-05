@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
             if (!token) throw new Error('JWT token not found in response');
             setUser(token);
             Cookies.set('jwt', token, { expires: 7 });
+            localStorage.setItem('token', token);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             router.push('/dashboard/pages');
         } catch (error) {
