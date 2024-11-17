@@ -163,6 +163,35 @@ export default function Users() {
             setSelectedUsers(users.map(user => user._id));
         }
     };
+    const revokeProductAccess = async (userId, productId, productName) => {
+    if (!confirm(`هل أنت متأكد من أنك تريد إلغاء وصول المستخدم إلى ${productName}؟`)) {
+        return;
+    }
+
+    setLoadingAccess({ ...loadingAccess, [userId]: true });
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+        await axios.delete(
+            `${API_BASE_URL}/api/auth/admin/users/${userId}/products/${productId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Update local state to remove the product
+        setUserProducts(prev => ({
+            ...prev,
+            [userId]: prev[userId].filter(product => product._id !== productId)
+        }));
+
+        setSuccessMessage('تم إلغاء الوصول إلى المنتج بنجاح');
+    } catch (error) {
+        const errorMsg = error.response?.data?.message || error.message;
+        setErrorMessage(`خطأ أثناء إلغاء الوصول إلى المنتج: ${errorMsg}`);
+    } finally {
+        setLoadingAccess({ ...loadingAccess, [userId]: false });
+    }
+};
 
     const deleteSelectedUsers = async () => {
         const confirmDelete = window.confirm("هل انت متاكد انك تريد حذف المستخدمين المختارين?");
@@ -230,6 +259,9 @@ export default function Users() {
             <main className="head">
                 <div className="head-title">
                     <h3 className="title">المستخدمين: {totalCount}</h3>
+                           <Link href="/dashboard/users/new-user" className="addButton">
+                    Add New user
+                </Link>
                 </div>
 
                 {selectedUsers.length > 0 && (
@@ -263,15 +295,23 @@ export default function Users() {
                                     <td>{user.phone}</td>
                                     <td>{user.country}</td>
                                     <td>{user.isConfirmed ? 'نعم' : 'لا'}</td>
-                                    <td>
-                                        <div className="current-products">
-                                            {userProducts[user._id]?.map(product => (
-                                                <span key={product._id} className="product-tag">
-                                                    {product.name}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
+                               <td>
+    <div className="current-products">
+        {userProducts[user._id]?.map(product => (
+            <span key={product._id} className="product-tag">
+                {product.name}
+                <button
+                    onClick={() => revokeProductAccess(user._id, product._id, product.name)}
+                    className="revoke-access-btn"
+                    disabled={loadingAccess[user._id]}
+                >
+                    <RiDeleteBin6Line className="delete-icon" />
+                </button>
+            </span>
+        ))}
+    </div>
+</td>
+
                                     <td>
                                         <div className="product-assign-container">
                                             <select
@@ -298,7 +338,9 @@ export default function Users() {
                                             className='delete'
                                             style={{ margin: "0px 10px" }}
                                         />
-                                        <FaEye />
+                                              <Link href={`/dashboard/users/show/${user._id}`}>
+                                        <FaEye style={{ color: '#4D4F5C' }} />
+                                    </Link>   
                                         {!user.isConfirmed && (
                                             <button onClick={() => confirmUser(user._id)}>تأكيد</button>
                                         )}

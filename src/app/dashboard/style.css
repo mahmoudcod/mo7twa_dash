@@ -577,3 +577,48 @@ textarea {
 .loading-indicator {
     color: #666;
 }
+
+
+/* Add these styles to your CSS file */
+.product-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 2px;
+    font-size: 0.875rem;
+}
+.product-tag {
+    display: inline-flex;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 4px 8px;
+    margin: 2px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.revoke-access-btn {
+    background: none;
+    border: none;
+    padding: 0 0 0 4px;
+    margin-left: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.revoke-access-btn:hover {
+    color: #dc3545;
+}
+
+.revoke-access-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.delete-icon {
+    width: 16px;
+    height: 16px;
+}

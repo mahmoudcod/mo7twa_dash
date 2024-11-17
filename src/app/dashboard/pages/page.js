@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete } from 'react-icons/md';
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete, MdContentCopy } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useAuth } from '@/app/auth';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ export default function Post() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedPosts, setSelectedPosts] = useState([]);
     const [deleteSuccess, setDeleteSuccess] = useState(false);
+    const [cloneSuccess, setCloneSuccess] = useState(false);
     const [pageSize] = useState(10);
     const { getToken } = useAuth();
     const [pages, setPages] = useState([]);
@@ -60,6 +61,30 @@ export default function Post() {
             setLoading(false);
         }
     };
+
+    const clonePage = async (pageId, pageName) => {
+        if (window.confirm(`Are you sure you want to clone "${pageName}"? A copy will be created with "(Copy)" added to its name.`)) {
+            try {
+                const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${pageId}/clone`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                
+                if (!response.ok) throw new Error('Failed to clone page');
+                
+                setCloneSuccess(true);
+                // Clear success message after 3 seconds
+                setTimeout(() => setCloneSuccess(false), 3000);
+                // Refresh the pages list
+                fetchPages();
+            } catch (error) {
+                setError('Error cloning page');
+            }
+        }
+    };
+
     const deleteSelectedPosts = async () => {
         if (window.confirm('Are you sure you want to delete selected pages?')) {
             try {
@@ -82,8 +107,8 @@ export default function Post() {
         }
     };
 
-    const deletePage = async (pageId) => {
-        if (window.confirm('Are you sure you want to delete this page?')) {
+    const deletePage = async (pageId, pageName) => {
+        if (window.confirm(`Are you sure you want to delete "${pageName}"?`)) {
             try {
                 await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${pageId}`, {
                     method: 'DELETE',
@@ -121,6 +146,8 @@ export default function Post() {
             )}
 
             {deleteSuccess && <div className="success-message">Deleted successfully</div>}
+            {cloneSuccess && <div className="success-message">Page cloned successfully</div>}
+            
             <div className="table-container">
                 <table className="table">
                     <thead>
@@ -166,14 +193,21 @@ export default function Post() {
                                 <td>
                                     {item.image && <img src={item.image} alt={item.name} style={{ width: '50px' }} />}
                                 </td>
-                                <td>
+                                <td className="settings-column">
                                     <Link href={`/dashboard/pages/${item._id}`}>
                                         <MdOutlineEdit style={{ color: '#4D4F5C' }} />
                                     </Link>
+                                    <MdContentCopy 
+                                        onClick={() => clonePage(item._id, item.name)}
+                                        className="clone"
+                                        style={{ margin: '0px 10px', cursor: 'pointer', color: '#4D4F5C' }}
+                                        title="Clone page"
+                                    />
                                     <RiDeleteBin6Line
-                                        onClick={() => deletePage(item._id)}
+                                        onClick={() => deletePage(item._id, item.name)}
                                         className="delete"
-                                        style={{ margin: '0px 10px' }}
+                                        style={{ margin: '0px 10px', cursor: 'pointer' }}
+                                        title="Delete page"
                                     />
                                 </td>
                             </tr>
