@@ -14,7 +14,8 @@ export default function CreatePage() {
         description: '',
         image: null,
         category: [],
-        instructions: ''
+        instructions: '',
+        status: 'draft' // Added status field with default value
     });
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -67,6 +68,19 @@ export default function CreatePage() {
         setPageData((prevData) => ({ ...prevData, category: selectedOptions }));
     };
 
+    const handleStatusChange = (e) => {
+        const { value } = e.target;
+        setPageData((prevData) => ({ ...prevData, status: value }));
+    };
+
+    // Validate if page can be published
+    const canPublish = () => {
+        return pageData.name && 
+               pageData.description && 
+               pageData.category.length > 0 && 
+               pageData.instructions;
+    };
+
     // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -75,14 +89,22 @@ export default function CreatePage() {
         setErrorMessage(null);
         setSuccessMessage(null);
 
+        // Validate if trying to publish
+        if (pageData.status === 'published' && !canPublish()) {
+            setErrorMessage('Cannot publish: Please fill in all required fields');
+            setLoading(false);
+            return;
+        }
+
         try {
             const formData = new FormData();
             formData.append('name', pageData.name);
             formData.append('description', pageData.description);
-            pageData.category.forEach((categoryId, index) => {
-                formData.append(`category`, categoryId);  // Append each category separately
+            pageData.category.forEach((categoryId) => {
+                formData.append('category', categoryId);
             });
             formData.append('instructions', pageData.instructions);
+            formData.append('status', pageData.status); // Add status to form data
             if (pageData.image) {
                 formData.append('image', pageData.image);
             }
@@ -100,7 +122,7 @@ export default function CreatePage() {
                 throw new Error(errorData.message || 'Failed to create the page');
             }
 
-            setSuccessMessage("Page created successfully");
+            setSuccessMessage(`Page created successfully as ${pageData.status}`);
             router.push('/dashboard/pages');
         } catch (err) {
             setErrorMessage("Error creating the page: " + err.message);
@@ -135,7 +157,7 @@ export default function CreatePage() {
                             style={{ height: '300px' }}
                             renderHTML={(text) => mdParser.render(text)}
                             onChange={handleDescriptionChange}
-                            view={{ html: false }}  // Disables the preview
+                            view={{ html: false }}
                         />
                     </div>
                     <div className="form-group">
@@ -171,11 +193,52 @@ export default function CreatePage() {
                             required
                         />
                     </div>
-                    <button className='sub-button' type="submit" disabled={loading}>
-                        {loading ? 'Creating...' : 'Create Page'}
+                    <div className="form-group">
+                        <label>Status:</label>
+                        <select
+                            name="status"
+                            value={pageData.status}
+                            onChange={handleStatusChange}
+                            className="status-select"
+                        >
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
+                        {pageData.status === 'published' && !canPublish() && (
+                            <small className="status-warning">
+                                All required fields must be filled to publish
+                            </small>
+                        )}
+                    </div>
+                    <button 
+                        className='sub-button' 
+                        type="submit" 
+                        disabled={loading || (pageData.status === 'published' && !canPublish())}
+                    >
+                        {loading ? 'Creating...' : `Create Page as ${pageData.status}`}
                     </button>
                 </form>
             </main>
+
+            <style jsx>{`
+                .status-select {
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    width: 100%;
+                    margin-top: 5px;
+                }
+                .status-warning {
+                    color: #ff6b6b;
+                    font-size: 12px;
+                    margin-top: 5px;
+                    display: block;
+                }
+                .sub-button:disabled {
+                    background-color: #cccccc;
+                    cursor: not-allowed;
+                }
+            `}</style>
         </>
     );
 }

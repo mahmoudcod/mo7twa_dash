@@ -20,20 +20,20 @@ export default function CreateCategory() {
         const fetchPages = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/my-pages', {
+                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
                 if (!response.ok) throw new Error('Failed to fetch pages');
                 const data = await response.json();
-                setAvailablePages(data);
+                setAvailablePages(data.pages); // Access the pages array from the response
             } catch (err) {
                 setErrorMessage("Error fetching pages: " + err.message);
             }
         };
         fetchPages();
-    }, [getToken]);
+    }, []); // Removed getToken from dependencies as we're using localStorage directly
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -47,7 +47,7 @@ export default function CreateCategory() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = getToken();
+        const token = localStorage.getItem('token');
         setLoading(true);
         setErrorMessage(null);
         setSuccessMessage(null);
@@ -101,6 +101,7 @@ export default function CreateCategory() {
                             name="pages"
                             value={categoryData.pages}
                             onChange={handlePageSelection}
+                            className="h-32"
                         >
                             {Array.isArray(availablePages) && availablePages.length > 0 ? (
                                 availablePages.map((page) => (

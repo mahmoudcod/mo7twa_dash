@@ -10,7 +10,14 @@ const mdParser = new MarkdownIt();
 
 export default function EditPage({ params }) {
     const { id } = params;
-    const [pageData, setPageData] = useState({ name: '', description: '', image: null, category: [], instructions: '' });
+    const [pageData, setPageData] = useState({
+        name: '',
+        description: '',
+        image: null,
+        category: [],
+        instructions: '',
+        status: 'draft' // Default to 'draft'
+    });
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
@@ -39,8 +46,9 @@ export default function EditPage({ params }) {
                     name: data.name,
                     description: data.description,
                     image: data.image,
-                    category: Array.isArray(data.categoyr) ? data.category : [],
-                    instructions: data.userInstructions
+                    category: Array.isArray(data.category) ? data.category.map((cat) => cat._id) : [],
+                    instructions: data.userInstructions,
+                    status: data.status || 'draft' // Use the status from the response, default to 'draft'
                 });
             } catch (err) {
                 setErrorMessage(err.message);
@@ -80,27 +88,19 @@ export default function EditPage({ params }) {
         setPageData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    // const handleCategoryChange = (e) => {
-    //     const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    //     setPageData(prevData => ({ ...prevData, category: selectedOptions }));
-    // };
     const handleCategoryCheckboxChange = (e, categoryId) => {
         if (e.target.checked) {
-            // Add category if checked
-            setPageData(prevData => ({
+            setPageData((prevData) => ({
                 ...prevData,
                 category: [...prevData.category, categoryId]
             }));
         } else {
-            // Remove category if unchecked
-            setPageData(prevData => ({
+            setPageData((prevData) => ({
                 ...prevData,
-                category: prevData.category.filter(id => id !== categoryId)
+                category: prevData.category.filter((id) => id !== categoryId)
             }));
         }
     };
-
-
 
     const handleDescriptionChange = ({ text }) => {
         setPageData((prevData) => ({ ...prevData, description: text }));
@@ -108,6 +108,10 @@ export default function EditPage({ params }) {
 
     const handleImageChange = (e) => {
         setPageData((prevData) => ({ ...prevData, image: e.target.files[0] }));
+    };
+
+    const handleStatusChange = (e) => {
+        setPageData((prevData) => ({ ...prevData, status: e.target.value }));
     };
 
     const handleSubmit = async (e) => {
@@ -119,10 +123,10 @@ export default function EditPage({ params }) {
             formData.append('name', pageData.name);
             formData.append('description', pageData.description);
             formData.append('instructions', pageData.instructions);
+            formData.append('status', pageData.status); // Add status to the form data
 
-            // Append the categories as an array of IDs
-            pageData.category.forEach(categoryId => {
-                formData.append('category', categoryId);  // Assuming the backend accepts multiple 'category' fields
+            pageData.category.forEach((categoryId) => {
+                formData.append('category', categoryId);
             });
 
             if (pageData.image) {
@@ -141,15 +145,14 @@ export default function EditPage({ params }) {
                 throw new Error('Failed to update the page');
             }
 
-            setSuccessMessage("Page updated successfully");
+            setSuccessMessage('Page updated successfully');
             router.push('/dashboard/pages');
         } catch (err) {
-            setErrorMessage("Error updating the page: " + err.message);
+            setErrorMessage('Error updating the page: ' + err.message);
         } finally {
             setIsLoading(false);
         }
     };
-
 
     if (loading) return <p>Loading...</p>;
     if (errorMessage) return <p>Error: {errorMessage}</p>;
@@ -180,7 +183,7 @@ export default function EditPage({ params }) {
                             style={{ height: '300px' }}
                             renderHTML={(text) => mdParser.render(text)}
                             onChange={handleDescriptionChange}
-                            view={{ html: false }}  // This disables the preview
+                            view={{ html: false }}
                         />
                     </div>
                     <div className="form-group">
@@ -194,6 +197,11 @@ export default function EditPage({ params }) {
                     </div>
                     <div className="form-group">
                         <label>Image:</label>
+                        {pageData.image && typeof pageData.image === 'string' && (
+                            <div>
+                                <img src={pageData.image} alt="Current Page Image" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                            </div>
+                        )}
                         <input
                             type="file"
                             onChange={handleImageChange}
@@ -216,9 +224,18 @@ export default function EditPage({ params }) {
                             ))}
                         </div>
                     </div>
-
-
-                    <button className='sub-button' type="submit" disabled={isLoading}>
+                    <div className="form-group">
+                        <label>Status:</label>
+                        <select
+                            name="status"
+                            value={pageData.status}
+                            onChange={handleStatusChange}
+                        >
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </div>
+                    <button className="sub-button" type="submit" disabled={isLoading}>
                         {isLoading ? 'Updating...' : 'Save Changes'}
                     </button>
                 </form>

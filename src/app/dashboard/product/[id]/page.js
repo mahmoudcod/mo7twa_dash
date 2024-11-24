@@ -1,3 +1,5 @@
+
+// EditProduct.js
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,8 +8,9 @@ import { useAuth } from '@/app/auth';
 export default function EditProduct({ params }) {
     const [productData, setProductData] = useState({
         name: '',
+        description: '', // Added description field
         promptLimit: 0,
-        accessPeriodDays: 30, // Default to 30 days, like in CreateProduct
+        accessPeriodDays: 30,
         pages: [],
         category: []
     });
@@ -27,14 +30,12 @@ export default function EditProduct({ params }) {
                     Authorization: token ? `Bearer ${token}` : '',
                 };
 
-                // Fetch product data
                 const productResponse = await fetch(`https://mern-ordring-food-backend.onrender.com/api/products/${params.id}`, {
                     headers
                 });
                 if (!productResponse.ok) throw new Error('Failed to fetch product');
                 const product = await productResponse.json();
 
-                // Normalize category and pages data
                 const normalizedCategories = product.category ? product.category.map(cat => (typeof cat === 'object' ? cat._id : cat)) : [];
                 const normalizedPages = product.pages ? product.pages.map(page => (typeof page === 'object' ? page._id : page)) : [];
 
@@ -45,13 +46,11 @@ export default function EditProduct({ params }) {
                     pages: normalizedPages
                 });
 
-                // Fetch categories
                 const categoryResponse = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', { headers });
                 if (!categoryResponse.ok) throw new Error('Failed to fetch categories');
                 const categoryData = await categoryResponse.json();
                 setCategories(categoryData.categories || []);
 
-                // Fetch pages
                 const pageResponse = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', { headers });
                 if (!pageResponse.ok) throw new Error('Failed to fetch pages');
                 const pageData = await pageResponse.json();
@@ -89,6 +88,7 @@ export default function EditProduct({ params }) {
             const token = getToken();
             const submissionData = {
                 name: productData.name,
+                description: productData.description,
                 promptLimit: parseInt(productData.promptLimit, 10),
                 accessPeriodDays: parseInt(productData.accessPeriodDays, 10),
                 pages: productData.pages,
@@ -135,6 +135,18 @@ export default function EditProduct({ params }) {
                             value={productData.name || ''}
                             onChange={handleInputChange}
                             required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Description:</label>
+                        <textarea
+                            name="description"
+                            value={productData.description || ''}
+                            onChange={handleInputChange}
+                            required
+                            rows="4"
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter product description..."
                         />
                     </div>
                     <div className="form-group">

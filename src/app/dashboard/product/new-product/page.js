@@ -6,8 +6,9 @@ import { useAuth } from '@/app/auth';
 export default function CreateProduct() {
     const [productData, setProductData] = useState({
         name: '',
+        description: '', // Added description field
         promptLimit: 0,
-        accessPeriodDays: 30, // Default to 30 days
+        accessPeriodDays: 30,
         pages: [],
         category: []
     });
@@ -19,7 +20,6 @@ export default function CreateProduct() {
     const { getToken } = useAuth();
     const router = useRouter();
 
-    // Fetch categories and pages on mount
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -28,7 +28,6 @@ export default function CreateProduct() {
                     Authorization: token ? `Bearer ${token}` : '',
                 };
 
-                // Fetch categories
                 const categoryResponse = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
                     headers
                 });
@@ -36,7 +35,6 @@ export default function CreateProduct() {
                 const categoryData = await categoryResponse.json();
                 setCategories(categoryData.categories);
 
-                // Fetch pages
                 const pageResponse = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
                     headers
                 });
@@ -51,7 +49,6 @@ export default function CreateProduct() {
         fetchData();
     }, []);
 
-    // Handle input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setProductData((prevData) => ({ ...prevData, [name]: value }));
@@ -67,7 +64,6 @@ export default function CreateProduct() {
         setProductData((prevData) => ({ ...prevData, category: selectedCategories }));
     };
 
-    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         const token = getToken();
@@ -84,7 +80,7 @@ export default function CreateProduct() {
                 },
                 body: JSON.stringify({
                     ...productData,
-                    accessPeriodDays: parseInt(productData.accessPeriodDays) // Ensure it's a number
+                    accessPeriodDays: parseInt(productData.accessPeriodDays)
                 }),
             });
 
@@ -119,6 +115,18 @@ export default function CreateProduct() {
                             value={productData.name}
                             onChange={handleInputChange}
                             required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Description:</label>
+                        <textarea
+                            name="description"
+                            value={productData.description}
+                            onChange={handleInputChange}
+                            required
+                            rows="4"
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter product description..."
                         />
                     </div>
                     <div className="form-group">

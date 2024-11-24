@@ -24,7 +24,7 @@ export default function EditCategory({ params }) {
           fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('https://mern-ordring-food-backend.onrender.com/api/pages/my-pages', {
+          fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
             headers: { Authorization: `Bearer ${token}` },
           })
         ]);
@@ -42,14 +42,14 @@ export default function EditCategory({ params }) {
           name: categoryData.name,
           pages: categoryData.pages.map(page => page._id)
         });
-        setAvailablePages(pagesData);
+        setAvailablePages(pagesData.pages);
       } catch (err) {
         setErrorMessage("Error fetching data: " + err.message);
       }
     };
 
     fetchCategoryAndPages();
-  }, [id, getToken]);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
