@@ -5,8 +5,38 @@ import { useAuth } from '@/app/auth';
 import MarkdownIt from 'markdown-it';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
+import Modal from 'react-modal';
 
 const mdParser = new MarkdownIt();
+
+function LinkImagePopup({ isOpen, onRequestClose, onSubmit }) {
+    const [url, setUrl] = useState('');
+    const [altText, setAltText] = useState('');
+
+    const handleSubmit = () => {
+        onSubmit({ url, altText });
+        onRequestClose();
+    };
+
+    return (
+        <Modal isOpen={isOpen} onRequestClose={onRequestClose} contentLabel="Link/Image Popup">
+            <h2>Insert Link or Image</h2>
+            <input
+                type="text"
+                placeholder="URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+            />
+            <input
+                type="text"
+                placeholder="Alt Text"
+                value={altText}
+                onChange={(e) => setAltText(e.target.value)}
+            />
+            <button onClick={handleSubmit}>Insert</button>
+        </Modal>
+    );
+}
 
 export default function EditPage({ params }) {
     const { id } = params;
@@ -16,7 +46,7 @@ export default function EditPage({ params }) {
         image: null,
         category: [],
         instructions: '',
-        status: 'draft' // Default to 'draft'
+        status: 'draft'
     });
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -26,6 +56,64 @@ export default function EditPage({ params }) {
     const { getToken } = useAuth();
     const router = useRouter();
     const [token, setToken] = useState(null);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+    const uploadImageToServer = async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('name', pageData.name);
+        formData.append('description', pageData.description);
+        formData.append('instructions', pageData.instructions);
+        formData.append('status', pageData.status);
+        
+        pageData.category.forEach((categoryId) => {
+            formData.append('category', categoryId);
+        });
+
+        const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        return data.image;
+    };
+
+    const mdEditorConfig = {
+        view: {
+            menu: true,
+            md: true,
+            html: true
+        },
+        canView: {
+            menu: true,
+            md: true,
+            html: true,
+            fullScreen: true,
+            hideMenu: true
+        },
+        onImageUpload: async (file) => {
+            try {
+                const imageUrl = await uploadImageToServer(file);
+                return imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+                return '';
+            }
+        },
+        onCustomIconClick: {
+            image: () => setIsPopupOpen(true),
+            link: () => setIsPopupOpen(true)
+        }
+    };
 
     useEffect(() => {
         const token = getToken();
@@ -48,7 +136,7 @@ export default function EditPage({ params }) {
                     image: data.image,
                     category: Array.isArray(data.category) ? data.category.map((cat) => cat._id) : [],
                     instructions: data.userInstructions,
-                    status: data.status || 'draft' // Use the status from the response, default to 'draft'
+                    status: data.status || 'draft'
                 });
             } catch (err) {
                 setErrorMessage(err.message);
@@ -107,11 +195,40 @@ export default function EditPage({ params }) {
     };
 
     const handleImageChange = (e) => {
-        setPageData((prevData) => ({ ...prevData, image: e.target.files[0] }));
+        const file = e.target.files[0];
+        if (file) {
+            setPageData((prevData) => ({ ...prevData, image: file }));
+        }
     };
 
     const handleStatusChange = (e) => {
         setPageData((prevData) => ({ ...prevData, status: e.target.value }));
+    };
+
+    const handleIconClick = () => {
+        setIsPopupOpen(true);
+    };
+
+    const handlePopupSubmit = async ({ url, altText }) => {
+        if (url.startsWith('data:') || url.startsWith('blob:')) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+                const imageUrl = await uploadImageToServer(file);
+                url = imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+                return;
+            }
+        }
+
+        const imageMarkdown = `![${altText}](${url})`;
+        setPageData(prevData => ({
+            ...prevData,
+            description: prevData.description + '\n' + imageMarkdown
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -123,7 +240,7 @@ export default function EditPage({ params }) {
             formData.append('name', pageData.name);
             formData.append('description', pageData.description);
             formData.append('instructions', pageData.instructions);
-            formData.append('status', pageData.status); // Add status to the form data
+            formData.append('status', pageData.status);
 
             pageData.category.forEach((categoryId) => {
                 formData.append('category', categoryId);
@@ -180,19 +297,25 @@ export default function EditPage({ params }) {
                         <label>Description:</label>
                         <MdEditor
                             value={pageData.description}
-                            style={{ height: '300px' }}
                             renderHTML={(text) => mdParser.render(text)}
                             onChange={handleDescriptionChange}
-                            view={{ html: false }}
+                            config={mdEditorConfig}
+                        />
+                        <LinkImagePopup
+                            isOpen={isPopupOpen}
+                            onRequestClose={() => setIsPopupOpen(false)}
+                            onSubmit={handlePopupSubmit}
                         />
                     </div>
-                    <div className="form-group">
-                        <label>User Instructions:</label>
+                    <div className="form-group" style={{ width: '100%' }}>
+                        <label>Boxing Bot:</label>
                         <textarea
-                            name="instructions"
                             value={pageData.instructions}
+                            name="instructions"
                             onChange={handleInputChange}
-                            required
+                            rows="20"
+                            style={{ width: '100%', direction: 'ltr' }}
+                            placeholder="Enter detailed instructions here..."
                         />
                     </div>
                     <div className="form-group">

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete } from "react-icons/md";
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdDelete } from "react-icons/md";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import Link from 'next/link';
 import { FaEye } from "react-icons/fa";
@@ -18,11 +18,11 @@ export default function Users() {
     const { getToken } = useAuth();
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [loadingAccess, setLoadingAccess] = useState({}); // Track loading state for each user
+    const [loadingAccess, setLoadingAccess] = useState({});
     const pageSize = 30;
     const [token, setToken] = useState(null);
     const [products, setProducts] = useState([]);
-    const [userProducts, setUserProducts] = useState({}); // Track products for each user
+    const [userProducts, setUserProducts] = useState({});
 
     useEffect(() => {
         const fetchToken = () => {
@@ -38,42 +38,65 @@ export default function Users() {
             fetchProducts();
         }
     }, [currentPage, token]);
+const fetchUsers = async () => {
+    setLoading(true);
+    try {
+        // First, fetch all products to create a product ID to name mapping
+        const productsResponse = await axios.get(`${API_BASE_URL}/api/products`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const productMap = productsResponse.data.products.reduce((acc, product) => {
+            acc[product._id] = product.name;
+            return acc;
+        }, {});
 
-    // Fetch users with their products
-    const fetchUsers = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get(`${API_BASE_URL}/api/auth/admin/users`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: {
-                    page: currentPage,
-                    limit: pageSize,
-                },
-            });
-            setUsers(response.data.users);
-            setTotalCount(response.data.totalCount);
+        // Then fetch users
+        const response = await axios.get(`${API_BASE_URL}/api/auth/admin/users`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+                page: currentPage,
+                limit: pageSize,
+            },
+        });
 
-            // Fetch product access for each user
-            const productAccess = {};
-            await Promise.all(response.data.users.map(async (user) => {
-                try {
-                    const productsResponse = await axios.get(`${API_BASE_URL}/api/auth/admin/users/${user._id}/products`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    productAccess[user._id] = productsResponse.data.products;
-                } catch (error) {
-                    console.error(`Error fetching products for user ${user._id}:`, error);
-                    productAccess[user._id] = [];
-                }
+        // Process users and map product names
+        const usersWithProductInfo = response.data.users.map(user => {
+            // Map product IDs to names
+            const productsWithAccess = user.productAccess.map(productAccessItem => ({
+                productId: productAccessItem.productId,
+                productName: productMap[productAccessItem.productId] || 'Unknown Product',
+                isActive: productAccessItem.isActive
             }));
-            setUserProducts(productAccess);
-        } catch (error) {
-            setErrorMessage("خطأ في جلب المستخدمين: " + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
 
+            return {
+                ...user,
+                productsWithAccess
+            };
+        });
+
+        setUsers(usersWithProductInfo);
+        setTotalCount(response.data.totalCount);
+
+        // Prepare product access information for userProducts state
+        const productAccess = {};
+        usersWithProductInfo.forEach(user => {
+            productAccess[user._id] = user.productsWithAccess.map(product => ({
+                _id: product.productId,
+                name: product.productName,
+                accessStatus: product.isActive ? 'active' : 'inactive'
+            }));
+        });
+        
+        setUserProducts(productAccess);
+        setProducts(productsResponse.data.products);
+
+    } catch (error) {
+        setErrorMessage("خطأ في جلب المستخدمين: " + error.message);
+        console.error(error);
+    } finally {
+        setLoading(false);
+    }
+};
     const fetchProducts = async () => {
         try {
             const response = await axios.get(`${API_BASE_URL}/api/products`, {
@@ -85,35 +108,38 @@ export default function Users() {
         }
     };
 
-    // Enhanced assignProductToUser with loading state and better error handling
     const assignProductToUser = async (userId, productId) => {
-        if (!productId) return; // Don't proceed if no product is selected
+        if (!productId) return;
 
         setLoadingAccess({ ...loadingAccess, [userId]: true });
         setErrorMessage(null);
         setSuccessMessage(null);
 
         try {
-            // Check if user already has access to this product
-            const userCurrentProducts = userProducts[userId] || [];
-            if (userCurrentProducts.some(p => p._id === productId)) {
-                setErrorMessage("المستخدم لديه بالفعل حق الوصول إلى هذا المنتج");
-                return;
-            }
-
+            // Use the new admin route for granting product access
             const response = await axios.post(
-                `${API_BASE_URL}/api/products/${productId}/grant-access`,
-                { userId },
+                `${API_BASE_URL}/api/auth/admin/users/${userId}/grant-product-access`, 
+                { productId }, 
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setSuccessMessage(`تم منح الوصول للمنتج بنجاح`);
+            // Refetch user's products to get the updated list
+            const productsResponse = await axios.get(
+                `${API_BASE_URL}/api/auth/admin/users/${userId}/products`, 
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
 
-            // Update local state with new product access
+            // Update local state with the new products
             setUserProducts(prev => ({
                 ...prev,
-                [userId]: [...(prev[userId] || []), response.data.product]
+                [userId]: productsResponse.data.products.map(product => ({
+                    _id: product._id,
+                    name: product.name,
+                    accessStatus: product.accessStatus
+                }))
             }));
+
+            setSuccessMessage(`تم منح الوصول للمنتج بنجاح`);
 
         } catch (error) {
             const errorMsg = error.response?.data?.message || error.message;
@@ -122,6 +148,66 @@ export default function Users() {
             setLoadingAccess({ ...loadingAccess, [userId]: false });
         }
     };
+const revokeProductAccess = async (userId, productId, productName) => {
+  // Confirm dialog
+  if (!confirm(`هل أنت متأكد من أنك تريد إلغاء وصول المستخدم إلى ${productName}؟`)) {
+    return;
+  }
+
+  // Update loading state
+  setLoadingAccess({ ...loadingAccess, [userId]: true });
+  setErrorMessage(null);
+  setSuccessMessage(null);
+
+  try {
+    // Updated URL to include the correct API path
+    const response = await axios.delete(
+      `${API_BASE_URL}/api/auth/admin/users/${userId}/product-access/${productId}`,
+      { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        } 
+      }
+    );
+
+    // Check if the operation was successful based on the success flag
+    if (response.data.success) {
+      // Update local state based on the backend response
+      setUserProducts(prev => {
+        const updatedProducts = prev[userId].filter(
+          product => product.productId !== productId
+        );
+        return {
+          ...prev,
+          [userId]: updatedProducts
+        };
+      });
+
+      // Set success message from backend response
+      setSuccessMessage(response.data.message || 'تم إلغاء الوصول إلى المنتج بنجاح');
+      
+      // Optionally update any counters or stats based on remainingAccess
+      if (typeof response.data.remainingAccess === 'number') {
+        // Update any UI elements that show the number of products
+        // setProductCount(response.data.remainingAccess);
+      }
+    } else {
+      // Handle case where operation was not successful but didn't throw an error
+      throw new Error(response.data.message || 'فشل في إلغاء الوصول إلى المنتج');
+    }
+  } catch (error) {
+    // Enhanced error handling
+    const errorMsg = error.response?.data?.message || 
+                    error.response?.data?.error || 
+                    error.message || 
+                    'حدث خطأ غير معروف';
+    setErrorMessage(`خطأ أثناء إلغاء الوصول إلى المنتج: ${errorMsg}`);
+    console.error('Error details:', error.response || error);
+  } finally {
+    setLoadingAccess({ ...loadingAccess, [userId]: false });
+  }
+};
     const handleDeleteUser = async (userId) => {
         setErrorMessage(null);
         setSuccessMessage(null);
@@ -163,35 +249,7 @@ export default function Users() {
             setSelectedUsers(users.map(user => user._id));
         }
     };
-    const revokeProductAccess = async (userId, productId, productName) => {
-    if (!confirm(`هل أنت متأكد من أنك تريد إلغاء وصول المستخدم إلى ${productName}؟`)) {
-        return;
-    }
 
-    setLoadingAccess({ ...loadingAccess, [userId]: true });
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-        await axios.delete(
-            `${API_BASE_URL}/api/auth/admin/users/${userId}/products/${productId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        // Update local state to remove the product
-        setUserProducts(prev => ({
-            ...prev,
-            [userId]: prev[userId].filter(product => product._id !== productId)
-        }));
-
-        setSuccessMessage('تم إلغاء الوصول إلى المنتج بنجاح');
-    } catch (error) {
-        const errorMsg = error.response?.data?.message || error.message;
-        setErrorMessage(`خطأ أثناء إلغاء الوصول إلى المنتج: ${errorMsg}`);
-    } finally {
-        setLoadingAccess({ ...loadingAccess, [userId]: false });
-    }
-};
 
     const deleteSelectedUsers = async () => {
         const confirmDelete = window.confirm("هل انت متاكد انك تريد حذف المستخدمين المختارين?");
@@ -295,13 +353,16 @@ export default function Users() {
                                     <td>{user.phone}</td>
                                     <td>{user.country}</td>
                                     <td>{user.isConfirmed ? 'نعم' : 'لا'}</td>
-                               <td>
+                         <td>
     <div className="current-products">
-        {userProducts[user._id]?.map(product => (
-            <span key={product._id} className="product-tag">
-                {product.name}
+        {user.productsWithAccess?.map(product => (
+            <span key={product.productId} className="product-tag">
+                {product.productName}
+                <span className={`access-status ${product.isActive ? 'active' : 'inactive'}`}>
+                    {product.isActive ? 'نشط' : 'غير نشط'}
+                </span>
                 <button
-                    onClick={() => revokeProductAccess(user._id, product._id, product.name)}
+                    onClick={() => revokeProductAccess(user._id, product.productId, product.productName)}
                     className="revoke-access-btn"
                     disabled={loadingAccess[user._id]}
                 >
@@ -311,7 +372,6 @@ export default function Users() {
         ))}
     </div>
 </td>
-
                                     <td>
                                         <div className="product-assign-container">
                                             <select

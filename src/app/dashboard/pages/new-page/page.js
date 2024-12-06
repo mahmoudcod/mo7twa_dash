@@ -5,8 +5,38 @@ import { useAuth } from '@/app/auth';
 import MarkdownIt from 'markdown-it';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
+import Modal from 'react-modal';
 
 const mdParser = new MarkdownIt();
+
+function LinkImagePopup({ isOpen, onRequestClose, onSubmit }) {
+    const [url, setUrl] = useState('');
+    const [altText, setAltText] = useState('');
+
+    const handleSubmit = () => {
+        onSubmit({ url, altText });
+        onRequestClose();
+    };
+
+    return (
+        <Modal isOpen={isOpen} onRequestClose={onRequestClose} contentLabel="Link/Image Popup">
+            <h2>Insert Link or Image</h2>
+            <input
+                type="text"
+                placeholder="URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+            />
+            <input
+                type="text"
+                placeholder="Alt Text"
+                value={altText}
+                onChange={(e) => setAltText(e.target.value)}
+            />
+            <button onClick={handleSubmit}>Insert</button>
+        </Modal>
+    );
+}
 
 export default function CreatePage() {
     const [pageData, setPageData] = useState({
@@ -15,20 +45,93 @@ export default function CreatePage() {
         image: null,
         category: [],
         instructions: '',
-        status: 'draft' // Added status field with default value
+        status: 'draft'
     });
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [token, setToken] = useState(null);
     const { getToken } = useAuth();
     const router = useRouter();
 
-    // Fetch categories on mount
+    const uploadImageToServer = async (file) => {
+        const currentToken = getToken(); // Get fresh token
+        if (!currentToken) {
+            throw new Error('Authentication token not found');
+        }
+
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('name', pageData.name || 'Untitled'); // Provide default name
+        formData.append('description', pageData.description || '');
+        formData.append('instructions', pageData.instructions || '');
+        formData.append('status', pageData.status || 'draft');
+        
+        if (pageData.category && pageData.category.length > 0) {
+            pageData.category.forEach((categoryId) => {
+                formData.append('category', categoryId);
+            });
+        }
+
+        try {
+            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`,
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to upload image');
+            }
+
+            const data = await response.json();
+            return data.image;
+        } catch (error) {
+            console.error('Upload error:', error);
+            throw error;
+        }
+    };
+
+    const mdEditorConfig = {
+        view: {
+            menu: true,
+            md: true,
+            html: true
+        },
+        canView: {
+            menu: true,
+            md: true,
+            html: true,
+            fullScreen: true,
+            hideMenu: true
+        },
+        onImageUpload: async (file) => {
+            try {
+                const imageUrl = await uploadImageToServer(file);
+                return imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image: ' + (error.message || 'Unknown error'));
+                return '';
+            }
+        },
+        onCustomIconClick: {
+            image: () => setIsPopupOpen(true),
+            link: () => setIsPopupOpen(true)
+        }
+    };
+
     useEffect(() => {
+        const token = getToken();
+        setToken(token);
+
         const fetchCategories = async () => {
             try {
-                const token = localStorage.getItem("token");
                 const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',
@@ -36,23 +139,30 @@ export default function CreatePage() {
                 });
                 if (!response.ok) throw new Error('Failed to fetch categories');
                 const data = await response.json();
+
                 if (Array.isArray(data.categories)) {
                     setCategories(data.categories);
                 } else {
                     throw new Error('Categories data is not an array');
                 }
             } catch (err) {
-                setErrorMessage(err.message);
+                console.error(err.message);
             }
         };
 
-        fetchCategories();
-    }, []);
+        if (token) {
+            fetchCategories();
+        }
+    }, [getToken]);
 
-    // Handle input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setPageData((prevData) => ({ ...prevData, [name]: value }));
+    };
+
+    const handleCategoryChange = (e) => {
+        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+        setPageData((prevData) => ({ ...prevData, category: selectedOptions }));
     };
 
     const handleDescriptionChange = ({ text }) => {
@@ -63,14 +173,35 @@ export default function CreatePage() {
         setPageData((prevData) => ({ ...prevData, image: e.target.files[0] }));
     };
 
-    const handleCategoryChange = (e) => {
-        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-        setPageData((prevData) => ({ ...prevData, category: selectedOptions }));
-    };
-
     const handleStatusChange = (e) => {
         const { value } = e.target;
         setPageData((prevData) => ({ ...prevData, status: value }));
+    };
+
+    const handleIconClick = () => {
+        setIsPopupOpen(true);
+    };
+
+    const handlePopupSubmit = async ({ url, altText }) => {
+        if (url.startsWith('data:') || url.startsWith('blob:')) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+                const imageUrl = await uploadImageToServer(file);
+                url = imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+                return;
+            }
+        }
+
+        const imageMarkdown = `![${altText}](${url})`;
+        setPageData(prevData => ({
+            ...prevData,
+            description: prevData.description + '\n' + imageMarkdown
+        }));
     };
 
     // Validate if page can be published
@@ -157,7 +288,12 @@ export default function CreatePage() {
                             style={{ height: '300px' }}
                             renderHTML={(text) => mdParser.render(text)}
                             onChange={handleDescriptionChange}
-                            view={{ html: false }}
+                            config={mdEditorConfig}
+                        />
+                        <LinkImagePopup
+                            isOpen={isPopupOpen}
+                            onRequestClose={() => setIsPopupOpen(false)}
+                            onSubmit={handlePopupSubmit}
                         />
                     </div>
                     <div className="form-group">
@@ -184,13 +320,15 @@ export default function CreatePage() {
                             onChange={handleImageChange}
                         />
                     </div>
-                    <div className="form-group">
-                        <label>User Instructions:</label>
+                    <div className="form-group" style={{ width: '100%' }}>
+                        <label>Boxing Bot:</label>
                         <textarea
-                            name="instructions"
                             value={pageData.instructions}
+                            name="instructions"
                             onChange={handleInputChange}
-                            required
+                            rows="10"
+                            style={{ width: '100%', direction: 'ltr', overflowY: 'scroll' }}
+                            placeholder="Enter detailed instructions here..."
                         />
                     </div>
                     <div className="form-group">
