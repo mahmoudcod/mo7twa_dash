@@ -195,19 +195,18 @@ export default function Post() {
                                 </td>
                                 <td className="settings-column">
                                     <Link href={`/dashboard/pages/${item._id}`}>
-                                        <MdOutlineEdit style={{ color: '#4D4F5C' }} />
+                                        <MdOutlineEdit style={{ color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }} className="icon" />
                                     </Link>
                                     <MdContentCopy 
                                         onClick={() => clonePage(item._id, item.name)}
-                                        className="clone"
-                                        style={{ margin: '0px 10px', cursor: 'pointer', color: '#4D4F5C' }}
+                                        className="clone icon"
+                                        style={{ margin: '0px 10px', cursor: 'pointer', color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }}
                                         title="Clone page"
                                     />
                                     <RiDeleteBin6Line
                                         onClick={() => deletePage(item._id, item.name)}
-                                        className="delete"
-                                        style={{ margin: '0px 10px', cursor: 'pointer' }}
-                                        title="Delete page"
+                                        className="delete icon"
+                                        style={{ margin: '0px 10px', cursor: 'pointer', color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }}
                                     />
                                 </td>
                             </tr>
@@ -215,6 +214,12 @@ export default function Post() {
                     </tbody>
                 </table>
             </div>
+
+            <style jsx>{`
+                .icon:hover {
+                    color: #3B3D4A;
+                }
+            `}</style>
 
             <div className="pagination">
                 <button

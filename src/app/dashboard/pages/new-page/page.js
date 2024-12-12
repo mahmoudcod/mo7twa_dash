@@ -56,27 +56,18 @@ export default function CreatePage() {
     const { getToken } = useAuth();
     const router = useRouter();
 
-    const uploadImageToServer = async (file) => {
-        const currentToken = getToken(); // Get fresh token
+    // Separate function for uploading markdown editor images
+    const uploadMarkdownImage = async (file) => {
+        const currentToken = getToken();
         if (!currentToken) {
             throw new Error('Authentication token not found');
         }
 
         const formData = new FormData();
         formData.append('image', file);
-        formData.append('name', pageData.name || 'Untitled'); // Provide default name
-        formData.append('description', pageData.description || '');
-        formData.append('instructions', pageData.instructions || '');
-        formData.append('status', pageData.status || 'draft');
-        
-        if (pageData.category && pageData.category.length > 0) {
-            pageData.category.forEach((categoryId) => {
-                formData.append('category', categoryId);
-            });
-        }
 
         try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages', {
+            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/upload', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${currentToken}`,
@@ -90,7 +81,7 @@ export default function CreatePage() {
             }
 
             const data = await response.json();
-            return data.image;
+            return data.url;
         } catch (error) {
             console.error('Upload error:', error);
             throw error;
@@ -112,7 +103,7 @@ export default function CreatePage() {
         },
         onImageUpload: async (file) => {
             try {
-                const imageUrl = await uploadImageToServer(file);
+                const imageUrl = await uploadMarkdownImage(file);
                 return imageUrl;
             } catch (error) {
                 console.error('Error uploading image:', error);
@@ -188,7 +179,7 @@ export default function CreatePage() {
                 const response = await fetch(url);
                 const blob = await response.blob();
                 const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
-                const imageUrl = await uploadImageToServer(file);
+                const imageUrl = await uploadMarkdownImage(file);
                 url = imageUrl;
             } catch (error) {
                 console.error('Error uploading image:', error);
@@ -235,7 +226,7 @@ export default function CreatePage() {
                 formData.append('category', categoryId);
             });
             formData.append('instructions', pageData.instructions);
-            formData.append('status', pageData.status); // Add status to form data
+            formData.append('status', pageData.status);
             if (pageData.image) {
                 formData.append('image', pageData.image);
             }

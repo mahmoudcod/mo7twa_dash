@@ -7,6 +7,7 @@ import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import Modal from 'react-modal';
 
+
 const mdParser = new MarkdownIt();
 
 function LinkImagePopup({ isOpen, onRequestClose, onSubmit }) {
@@ -58,20 +59,13 @@ export default function EditPage({ params }) {
     const [token, setToken] = useState(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-    const uploadImageToServer = async (file) => {
+    // Separate function for uploading markdown editor images
+    const uploadMarkdownImage = async (file) => {
         const formData = new FormData();
         formData.append('image', file);
-        formData.append('name', pageData.name);
-        formData.append('description', pageData.description);
-        formData.append('instructions', pageData.instructions);
-        formData.append('status', pageData.status);
-        
-        pageData.category.forEach((categoryId) => {
-            formData.append('category', categoryId);
-        });
 
-        const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
-            method: 'PUT',
+        const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/upload`, {
+            method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -83,38 +77,50 @@ export default function EditPage({ params }) {
         }
 
         const data = await response.json();
-        return data.image;
+        return data.url; // Assuming the API returns the image URL in a url field
     };
 
-    const mdEditorConfig = {
-        view: {
-            menu: true,
-            md: true,
-            html: true
-        },
-        canView: {
-            menu: true,
-            md: true,
-            html: true,
-            fullScreen: true,
-            hideMenu: true
-        },
-        onImageUpload: async (file) => {
-            try {
-                const imageUrl = await uploadImageToServer(file);
-                return imageUrl;
-            } catch (error) {
-                console.error('Error uploading image:', error);
-                alert('Failed to upload image. Please try again.');
-                return '';
+const mdEditorConfig = {
+    view: {
+        menu: true,
+        md: true,
+        html: true
+    },
+    canView: {
+        menu: true,
+        md: true,
+        html: true,
+        fullScreen: true,
+        hideMenu: true
+    },
+    hooks: {
+        onUnderline: () => {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const underlineText = `<u>${range.toString()}</u>`;
+                const newNode = document.createElement('span');
+                newNode.innerHTML = underlineText;
+                range.deleteContents();
+                range.insertNode(newNode);
             }
-        },
-        onCustomIconClick: {
-            image: () => setIsPopupOpen(true),
-            link: () => setIsPopupOpen(true)
         }
-    };
-
+    },
+    onImageUpload: async (file) => {
+        try {
+            const imageUrl = await uploadMarkdownImage(file);
+            return imageUrl;
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Failed to upload image. Please try again.');
+            return '';
+        }
+    },
+    onCustomIconClick: {
+        image: () => setIsPopupOpen(true),
+        link: () => setIsPopupOpen(true)
+    }
+};
     useEffect(() => {
         const token = getToken();
         setToken(token);
@@ -215,7 +221,7 @@ export default function EditPage({ params }) {
                 const response = await fetch(url);
                 const blob = await response.blob();
                 const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
-                const imageUrl = await uploadImageToServer(file);
+                const imageUrl = await uploadMarkdownImage(file);
                 url = imageUrl;
             } catch (error) {
                 console.error('Error uploading image:', error);
@@ -246,7 +252,7 @@ export default function EditPage({ params }) {
                 formData.append('category', categoryId);
             });
 
-            if (pageData.image) {
+            if (pageData.image && typeof pageData.image !== 'string') {
                 formData.append('image', pageData.image);
             }
 
