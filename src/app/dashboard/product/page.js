@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete } from 'react-icons/md';
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete, MdClose } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useAuth } from '@/app/auth';
 import Link from 'next/link';
@@ -8,13 +8,13 @@ import Link from 'next/link';
 export default function Products() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedProducts, setSelectedProducts] = useState([]);
-    const [deleteSuccess, setDeleteSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [pageSize] = useState(10);
     const { getToken } = useAuth();
     const [products, setProducts] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [categories, setCategories] = useState({});
     const [pages, setPages] = useState({});
     const [token, setToken] = useState(null);
@@ -45,7 +45,7 @@ export default function Products() {
             setProducts(data.products);
             setTotalCount(data.totalCount);
         } catch (err) {
-            setError('Failed to fetch products');
+            setErrorMessage('Failed to fetch products');
         } finally {
             setLoading(false);
         }
@@ -67,7 +67,7 @@ export default function Products() {
             setCategories(categoryMap);
         } catch (err) {
             console.error('Error fetching categories:', err);
-            setError('Failed to fetch categories');
+            setErrorMessage('Failed to fetch categories');
         }
     };
 
@@ -87,7 +87,7 @@ export default function Products() {
             setPages(pageMap);
         } catch (err) {
             console.error('Error fetching pages:', err);
-            setError('Failed to fetch pages');
+            setErrorMessage('Failed to fetch pages');
         }
     };
 
@@ -116,6 +116,7 @@ export default function Products() {
         }
         return 'Unknown';
     };
+
     const deleteSelectedProducts = async () => {
         if (window.confirm('Are you sure you want to delete selected products?')) {
             try {
@@ -128,41 +129,39 @@ export default function Products() {
 
                 const results = await Promise.all(deleteRequests);
 
-                // Check if all deletions were successful (status 200 or 204)
                 const allSuccessful = results.every(response => response.ok);
                 if (allSuccessful) {
-                    setDeleteSuccess(true);
+                    setSuccessMessage("Selected products deleted successfully");
                     setSelectedProducts([]);
-                    fetchProducts(); // Reload products after deletion
+                    fetchProducts();
                 } else {
-                    setError('Error deleting selected products. Please try again.');
+                    setErrorMessage('Error deleting selected products. Please try again.');
                 }
             } catch (error) {
-                setError('An error occurred while deleting products');
+                setErrorMessage('An error occurred while deleting products');
             }
         }
     };
 
-
     const deleteProduct = async (productId) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
-                await fetch(`https://mern-ordring-food-backend.onrender.com/api/products/${productId}`, {
+                const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/products/${productId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setDeleteSuccess(true);
+                if (!response.ok) throw new Error('Failed to delete product');
+                setSuccessMessage("Product deleted successfully");
                 fetchProducts();
             } catch (error) {
-                setError('Error deleting product');
+                setErrorMessage('Error deleting product');
             }
         }
     };
 
     if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error}</p>;
 
     const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -182,7 +181,23 @@ export default function Products() {
                 </button>
             )}
 
-            {deleteSuccess && <div className="success-message">Deleted successfully</div>}
+            {errorMessage && (
+                <div className="error-message">
+                    {errorMessage}
+                    <button className="message-close" onClick={() => setErrorMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="success-message">
+                    {successMessage}
+                    <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+
             <div className="table-container">
                 <table className="table">
                     <thead>
@@ -232,12 +247,12 @@ export default function Products() {
                                 <td>{item.userAccess?.length || 0}</td>
                                 <td>
                                     <Link href={`/dashboard/product/${item._id}`}>
-                                        <MdOutlineEdit style={{ color: '#4D4F5C' }} />
+                                        <MdOutlineEdit style={{ color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }} className="icon" />
                                     </Link>
                                     <RiDeleteBin6Line
                                         onClick={() => deleteProduct(item._id)}
-                                        className="delete"
-                                        style={{ margin: '0px 10px' }}
+                                        className="delete icon"
+                                        style={{ margin: '0px 10px', cursor: 'pointer', color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }}
                                     />
                                 </td>
                             </tr>
@@ -245,6 +260,12 @@ export default function Products() {
                     </tbody>
                 </table>
             </div>
+
+            <style jsx>{`
+                .icon:hover {
+                    color: #3B3D4A;
+                }
+            `}</style>
 
             <div className="pagination">
                 <button

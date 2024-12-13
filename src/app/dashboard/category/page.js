@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete } from 'react-icons/md';
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete, MdClose } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useAuth } from '@/app/auth';
 import Link from 'next/link';
@@ -9,14 +9,14 @@ import Link from 'next/link';
 export default function CategoryManagement() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedCategories, setSelectedCategories] = useState([]);
-    const [deleteSuccess, setDeleteSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [pageSize] = useState(10);
     const { getToken } = useAuth();
     const [categories, setCategories] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [token, setToken] = useState(null);
 
     useEffect(() => {
@@ -25,7 +25,7 @@ export default function CategoryManagement() {
                 const fetchedToken = getToken();
                 setToken(fetchedToken);
             } catch (err) {
-                setError('Failed to fetch token');
+                setErrorMessage('Failed to fetch token');
             }
         };
         fetchToken();
@@ -39,7 +39,7 @@ export default function CategoryManagement() {
 
     const fetchCategories = async () => {
         setLoading(true);
-        setError(null);
+        setErrorMessage(null);
         try {
             const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/categories?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
@@ -52,7 +52,7 @@ export default function CategoryManagement() {
             setTotalCount(data.totalCount);
             setTotalPages(data.totalPages);
         } catch (err) {
-            setError(err.message);
+            setErrorMessage(err.message);
         } finally {
             setLoading(false);
         }
@@ -72,10 +72,10 @@ export default function CategoryManagement() {
                     )
                 );
                 setSelectedCategories([]);
-                setDeleteSuccess(true);
+                setSuccessMessage("Selected categories deleted successfully");
                 fetchCategories();
             } catch (error) {
-                setError('Error deleting selected categories');
+                setErrorMessage('Error deleting selected categories');
             }
         }
     };
@@ -89,16 +89,15 @@ export default function CategoryManagement() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setDeleteSuccess(true);
+                setSuccessMessage("Category deleted successfully");
                 fetchCategories();
             } catch (error) {
-                setError('Error deleting category');
+                setErrorMessage('Error deleting category');
             }
         }
     };
 
     if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error}</p>;
 
     return (
         <main className="head">
@@ -116,7 +115,23 @@ export default function CategoryManagement() {
                 </button>
             )}
 
-            {deleteSuccess && <div className="success-message">Deleted successfully</div>}
+            {errorMessage && (
+                <div className="error-message">
+                    {errorMessage}
+                    <button className="message-close" onClick={() => setErrorMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="success-message">
+                    {successMessage}
+                    <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+
             <div className="table-container">
                 <table className="table">
                     <thead>
@@ -160,12 +175,12 @@ export default function CategoryManagement() {
                                 </td>
                                 <td>
                                     <Link href={`/dashboard/category/${category._id}`}>
-                                        <MdOutlineEdit style={{ color: '#4D4F5C' }} />
+                                        <MdOutlineEdit style={{ color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }} className="icon" />
                                     </Link>
                                     <RiDeleteBin6Line
                                         onClick={() => deleteCategory(category._id)}
-                                        className="delete"
-                                        style={{ margin: '0px 10px' }}
+                                        className="delete icon"
+                                        style={{ margin: '0px 10px', cursor: 'pointer', color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }}
                                     />
                                 </td>
                             </tr>
@@ -173,6 +188,12 @@ export default function CategoryManagement() {
                     </tbody>
                 </table>
             </div>
+
+            <style jsx>{`
+                .icon:hover {
+                    color: #3B3D4A;
+                }
+            `}</style>
 
             <div className="pagination">
                 <button

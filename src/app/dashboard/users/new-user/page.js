@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
+import { MdClose } from 'react-icons/md';
 
 export default function Register() {
     const [userData, setUserData] = useState({
@@ -16,13 +17,11 @@ export default function Register() {
     const { getToken } = useAuth();
     const router = useRouter();
 
-    // Handle input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setUserData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -58,8 +57,22 @@ export default function Register() {
                 <div className="head-title">
                     <h3 className="title">Register New Account</h3>
                 </div>
-                {errorMessage && <div className="error-message">{errorMessage}</div>}
-                {successMessage && <div className="success-message">{successMessage}</div>}
+                {errorMessage && (
+                    <div className="error-message">
+                        {errorMessage}
+                        <button className="message-close" onClick={() => setErrorMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="success-message">
+                        {successMessage}
+                        <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
                 <form className="content" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Email:</label>
@@ -106,6 +119,21 @@ export default function Register() {
                     </button>
                 </form>
             </main>
+
+            <style jsx>{`
+                .message-close {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                
+                .message-close:hover {
+                    opacity: 0.8;
+                }
+            `}</style>
         </>
     );
 }

@@ -4,6 +4,32 @@
     width: 100%;
 }
 
+.ai-output {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: #f1f8ff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.ai-output h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #0056b3;
+}
+
+.ai-output-box {
+    background-color: #ffffff;
+    padding: 1.2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #333333;
+    white-space: pre-wrap;
+    /* Preserve new lines and spaces */
+}
 .dashboard {
     display: flex;
 }

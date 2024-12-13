@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
+import { MdClose } from 'react-icons/md';
 
 const API_BASE_URL = 'https://mern-ordring-food-backend.onrender.com';
 
@@ -166,8 +167,22 @@ export default function EditUser({ params }) {
             <div className="head-title">
                 <h3 className="title">Edit User Product Access</h3>
             </div>
-            {errorMessage && <div className="error-message">{errorMessage}</div>}
-            {successMessage && <div className="success-message">{successMessage}</div>}
+            {errorMessage && (
+                <div className="error-message">
+                    {errorMessage}
+                    <button className="message-close" onClick={() => setErrorMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="success-message">
+                    {successMessage}
+                    <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
             
             <div className="content">
                 <div className="user-info mb-6">
@@ -260,6 +275,21 @@ export default function EditUser({ params }) {
                     </button>
                 </form>
             </div>
+
+            <style jsx>{`
+                .message-close {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                
+                .message-close:hover {
+                    opacity: 0.8;
+                }
+            `}</style>
         </main>
     );
 }

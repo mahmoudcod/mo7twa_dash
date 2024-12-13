@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter, useParams } from 'next/navigation';
+import { MdClose, MdArrowBack, MdFileDownload, } from 'react-icons/md';
+import ReactMarkdown from 'react-markdown';
 import * as XLSX from 'xlsx';
 
 const API_BASE_URL = 'https://mern-ordring-food-backend.onrender.com';
@@ -13,6 +15,7 @@ const UserDetails = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [filteredInteractions, setFilteredInteractions] = useState([]);
@@ -47,7 +50,7 @@ const UserDetails = () => {
                 setImageUrl(`${API_BASE_URL}${userData.avatar.url}`);
             }
         } catch (error) {
-            setErrorMessage('Error fetching user details:' + (error.response?.data?.message || error.message));
+            setErrorMessage('Error fetching user details: ' + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
         }
@@ -76,53 +79,86 @@ const UserDetails = () => {
     const exportToExcel = () => {
         if (!filteredInteractions.length) return;
 
-        // Prepare data for the Excel sheet
         const data = filteredInteractions.map((ai) => ({
             'User Input': ai.userInput,
             'AI Output': ai.aiOutput,
             'Timestamp': new Date(ai.timestamp).toLocaleString(),
         }));
 
-        // Create a worksheet and workbook
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'AI Interactions');
 
-        // Generate Excel file and download it
         const fileName = startDate || endDate 
             ? `User_${id}_AI_Interactions_${startDate || 'start'}_to_${endDate || 'end'}.xlsx`
             : `User_${id}_AI_Interactions.xlsx`;
         XLSX.writeFile(workbook, fileName);
+        setSuccessMessage('تم تصدير البيانات بنجاح');
     };
 
-    if (loading) return <div>جاري التحميل...</div>;
-    if (errorMessage) return <div className="error-message">{errorMessage}</div>;
-    if (!user) return <div>لم يتم العثور على المستخدم.</div>;
+    if (loading) return (
+        <div className="loading-container">
+            <div className="loading-spinner"></div>
+        </div>
+    );
 
     return (
-        <>
-            <main className="head">
-                <div className="head-title">
-                    <h3 className="title">تفاصيل المستخدم</h3>
+        <main className="user-details-container">
+            <div className="user-details-header">
+                <h2 className="user-details-title">تفاصيل المستخدم</h2>
+                <button 
+                    className="back-button" 
+                    onClick={() => router.push('/dashboard/users')}
+                >
+                    <MdArrowBack /> رجوع
+                </button>
+            </div>
+
+            {errorMessage && (
+                <div className="message error-message">
+                    {errorMessage}
+                    <button className="message-close" onClick={() => setErrorMessage('')}>
+                        <MdClose />
+                    </button>
                 </div>
-                <div className="content">
-                    <div className="form-group">
-                        <label>البريد الإلكتروني:</label>
-                        <p>{user.email}</p>
+            )}
+            
+            {successMessage && (
+                <div className="message success-message">
+                    {successMessage}
+                    <button className="message-close" onClick={() => setSuccessMessage('')}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+
+            <div className="content">
+                <div className="user-info">
+                    <div className="info-card">
+                        <h3>المعلومات الأساسية</h3>
+                        <div className="info-grid">
+                            <div className="info-item">
+                                <label>البريد الإلكتروني</label>
+                                <p>{user?.email}</p>
+                            </div>
+                            <div className="info-item">
+                                <label>الهاتف</label>
+                                <p>{user?.phone}</p>
+                            </div>
+                            <div className="info-item">
+                                <label>البلد</label>
+                                <p>{user?.country}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="form-group">
-                        <label>الهاتف:</label>
-                        <p>{user.phone}</p>
-                    </div>
-                    <div className="form-group">
-                        <label>البلد:</label>
-                        <p>{user.country}</p>
-                    </div>
-                    
-                    <div className="filter-section">
+                </div>
+                
+                <div className="filter-section">
+                    <h3>تصفية التفاعلات</h3>
+                    <div className="filter-content">
                         <div className="date-filters">
                             <div className="date-input">
-                                <label>من تاريخ:</label>
+                                <label>من تاريخ</label>
                                 <input
                                     type="date"
                                     value={startDate}
@@ -130,7 +166,7 @@ const UserDetails = () => {
                                 />
                             </div>
                             <div className="date-input">
-                                <label>إلى تاريخ:</label>
+                                <label>إلى تاريخ</label>
                                 <input
                                     type="date"
                                     value={endDate}
@@ -138,135 +174,52 @@ const UserDetails = () => {
                                 />
                             </div>
                         </div>
-                        <div className="results-count">
-                            عدد النتائج: {filteredInteractions.length}
+                        <div className="filter-actions">
+                            <div className="results-count">
+                                عدد النتائج: <span>{filteredInteractions.length}</span>
+                            </div>
+                            <button 
+                                className="export-button" 
+                                onClick={exportToExcel}
+                                disabled={!filteredInteractions.length}
+                            >
+                                <MdFileDownload /> تصدير إلى Excel
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <div className="form-group">
-                        <label>تتبع المخرجات:</label>
-                        <div className="ai-interactions">
-                            {filteredInteractions.map((ai) => (
-                                <div key={ai._id} className="ai-card">
+                <div className="interactions-section">
+                    <h3>تتبع المخرجات</h3>
+                    <div className="ai-interactions">
+                        {filteredInteractions.map((ai) => (
+                            <div key={ai._id} className="ai-card">
+                                <div className="ai-content">
                                     <div className="ai-input">
-                                        <strong>مدخلات المستخدم:</strong>
+                                        <strong>مدخلات المستخدم</strong>
                                         <p>{ai.userInput}</p>
                                     </div>
                                     <div className="ai-output">
-                                        <strong>المخرجات:</strong>
-                                        <p>{ai.aiOutput}</p>
-                                    </div>
-                                    <div className="ai-timestamp">
-                                        <small>تاريخ التفاعل: {new Date(ai.timestamp).toLocaleString()}</small>
+                                        <strong>المخرجات</strong>
+                                          <ReactMarkdown
+       
+        >{ai.aiOutput}</ReactMarkdown>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="ai-timestamp">
+                                    {new Date(ai.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                        ))}
+                        {filteredInteractions.length === 0 && (
+                            <div className="no-results">
+                                لا توجد تفاعلات في الفترة المحددة
+                            </div>
+                        )}
                     </div>
-
-                    <button className="sub-button" type="button" onClick={() => router.push('/dashboard/users')}>
-                        رجوع
-                    </button>
-                    <button 
-                        className="export-button" 
-                        type="button" 
-                        onClick={exportToExcel}
-                        disabled={!filteredInteractions.length}
-                    >
-                        تصدير إلى Excel ({filteredInteractions.length})
-                    </button>
                 </div>
-            </main>
-
-            <style jsx>{`
-                .content {
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .filter-section {
-                    margin: 1rem 0;
-                    padding: 1rem;
-                    background-color: #f5f5f5;
-                    border-radius: 8px;
-                }
-
-                .date-filters {
-                    display: flex;
-                    gap: 1rem;
-                    margin-bottom: 1rem;
-                }
-
-                .date-input {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }
-
-                .date-input input {
-                    padding: 0.5rem;
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
-                }
-
-                .results-count {
-                    font-size: 0.9rem;
-                    color: #666;
-                }
-
-                .ai-interactions {
-                    display: grid;
-                    gap: 1rem;
-                }
-
-                .ai-card {
-                    border: 1px solid #ccc;
-                    border-radius: 8px;
-                    padding: 1rem;
-                    background-color: #f9f9f9;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                }
-
-                .ai-input,
-                .ai-output {
-                    margin-bottom: 1rem;
-                }
-
-                .ai-input p,
-                .ai-output p {
-                    background-color: #eef1f3;
-                    padding: 0.5rem;
-                    border-radius: 4px;
-                    margin-top: 0.5rem;
-                }
-
-                .ai-timestamp {
-                    font-size: 0.9rem;
-                    color: #666;
-                    text-align: right;
-                }
-
-                .export-button {
-                    background-color: #4caf50;
-                    color: white;
-                    padding: 10px 15px;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    margin-top: 10px;
-                }
-
-                .export-button:disabled {
-                    background-color: #cccccc;
-                    cursor: not-allowed;
-                }
-
-                .export-button:hover:not(:disabled) {
-                    background-color: #45a049;
-                }
-            `}</style>
-        </>
+            </div>
+        </main>
     );
 };
 

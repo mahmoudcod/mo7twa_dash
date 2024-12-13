@@ -246,7 +246,7 @@ export default function Users() {
         (_, i) => startPage + i
     );
 
-    if (loading) return <div className="loading-spinner">جاري التحميل...</div>;
+    if (loading) return <div className="loading-spinner"></div>;
 
     return (
         <main className="head">

@@ -6,6 +6,7 @@ import MarkdownIt from 'markdown-it';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import Modal from 'react-modal';
+import { MdClose } from 'react-icons/md';
 
 const mdParser = new MarkdownIt();
 
@@ -259,8 +260,22 @@ export default function CreatePage() {
                 <div className="head-title">
                     <h3 className="title">Create New Page</h3>
                 </div>
-                {errorMessage && <div className="error-message">{errorMessage}</div>}
-                {successMessage && <div className="success-message">{successMessage}</div>}
+                {errorMessage && (
+                    <div className="error-message">
+                        {errorMessage}
+                        <button className="message-close" onClick={() => setErrorMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="success-message">
+                        {successMessage}
+                        <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
                 <form className="content" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Page Name:</label>
@@ -366,6 +381,18 @@ export default function CreatePage() {
                 .sub-button:disabled {
                     background-color: #cccccc;
                     cursor: not-allowed;
+                }
+                .message-close {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                
+                .message-close:hover {
+                    opacity: 0.8;
                 }
             `}</style>
         </>

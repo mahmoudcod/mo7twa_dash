@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
+import { MdClose } from 'react-icons/md';
 
 const CreateAdminPage = () => {
     const router = useRouter();
@@ -29,6 +30,7 @@ const CreateAdminPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMessage(null);
+        setSuccessMessage(null);
         setIsLoading(true);
 
         try {
@@ -62,8 +64,24 @@ const CreateAdminPage = () => {
                 <div className="head-title">
                     <h3 className="title">إنشاء مسؤول جديد</h3>
                 </div>
-                {errorMessage && <div className="error-message">{errorMessage}</div>}
-                {successMessage && <div className="success-message">{successMessage}</div>}
+
+                {errorMessage && (
+                    <div className="error-message">
+                        {errorMessage}
+                        <button className="message-close" onClick={() => setErrorMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="success-message">
+                        {successMessage}
+                        <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
+
                 <form className="content" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>البريد الإلكتروني:</label>
@@ -120,6 +138,21 @@ const CreateAdminPage = () => {
                     </button>
                 </form>
             </main>
+
+            <style jsx>{`
+                .message-close {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                
+                .message-close:hover {
+                    opacity: 0.8;
+                }
+            `}</style>
         </>
     );
 };

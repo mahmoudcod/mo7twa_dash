@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
+import { MdClose } from 'react-icons/md';
 
 export default function CreateProduct() {
     const [productData, setProductData] = useState({
         name: '',
-        description: '', // Added description field
+        description: '',
         promptLimit: 0,
         accessPeriodDays: 30,
         pages: [],
@@ -104,8 +105,22 @@ export default function CreateProduct() {
                 <div className="head-title">
                     <h3 className="title">Create New Product</h3>
                 </div>
-                {errorMessage && <div className="error-message">{errorMessage}</div>}
-                {successMessage && <div className="success-message">{successMessage}</div>}
+                {errorMessage && (
+                    <div className="error-message">
+                        {errorMessage}
+                        <button className="message-close" onClick={() => setErrorMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="success-message">
+                        {successMessage}
+                        <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
                 <form className="content" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Product Name:</label>
@@ -194,6 +209,21 @@ export default function CreateProduct() {
                     </button>
                 </form>
             </main>
+
+            <style jsx>{`
+                .message-close {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                
+                .message-close:hover {
+                    opacity: 0.8;
+                }
+            `}</style>
         </>
     );
 }

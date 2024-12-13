@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete, MdContentCopy } from 'react-icons/md';
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete, MdContentCopy, MdClose } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useAuth } from '@/app/auth';
 import Link from 'next/link';
@@ -8,8 +8,8 @@ import Link from 'next/link';
 export default function Post() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedPosts, setSelectedPosts] = useState([]);
-    const [deleteSuccess, setDeleteSuccess] = useState(false);
-    const [cloneSuccess, setCloneSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [pageSize] = useState(10);
     const { getToken } = useAuth();
     const [pages, setPages] = useState([]);
@@ -30,7 +30,7 @@ export default function Post() {
                 const fetchedToken = getToken();
                 setToken(fetchedToken);
             } catch (err) {
-                setError('Failed to fetch token');
+                setErrorMessage('Failed to fetch token');
             }
         };
         fetchToken();
@@ -44,7 +44,7 @@ export default function Post() {
 
     const fetchPages = async () => {
         setLoading(true);
-        setError(null);
+        setErrorMessage(null);
         try {
             const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
@@ -56,7 +56,7 @@ export default function Post() {
             setPages(data.pages);
             setTotalCount(data.totalCount);
         } catch (err) {
-            setError(err.message);
+            setErrorMessage(err.message);
         } finally {
             setLoading(false);
         }
@@ -74,13 +74,11 @@ export default function Post() {
                 
                 if (!response.ok) throw new Error('Failed to clone page');
                 
-                setCloneSuccess(true);
-                // Clear success message after 3 seconds
-                setTimeout(() => setCloneSuccess(false), 3000);
+                setSuccessMessage("Page cloned successfully");
                 // Refresh the pages list
                 fetchPages();
             } catch (error) {
-                setError('Error cloning page');
+                setErrorMessage('Error cloning page');
             }
         }
     };
@@ -99,10 +97,10 @@ export default function Post() {
                     )
                 );
                 setSelectedPosts([]);
-                setDeleteSuccess(true);
+                setSuccessMessage("Selected pages deleted successfully");
                 fetchPages();
             } catch (error) {
-                setError('Error deleting selected pages');
+                setErrorMessage('Error deleting selected pages');
             }
         }
     };
@@ -116,10 +114,10 @@ export default function Post() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setDeleteSuccess(true);
+                setSuccessMessage("Page deleted successfully");
                 fetchPages();
             } catch (error) {
-                setError('Error deleting page');
+                setErrorMessage('Error deleting page');
             }
         }
     };
@@ -145,8 +143,22 @@ export default function Post() {
                 </button>
             )}
 
-            {deleteSuccess && <div className="success-message">Deleted successfully</div>}
-            {cloneSuccess && <div className="success-message">Page cloned successfully</div>}
+            {errorMessage && (
+                <div className="error-message">
+                    {errorMessage}
+                    <button className="message-close" onClick={() => setErrorMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="success-message">
+                    {successMessage}
+                    <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                        <MdClose />
+                    </button>
+                </div>
+            )}
             
             <div className="table-container">
                 <table className="table">

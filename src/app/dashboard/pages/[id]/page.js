@@ -6,7 +6,7 @@ import MarkdownIt from 'markdown-it';
 import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import Modal from 'react-modal';
-
+import { MdClose } from 'react-icons/md';
 
 const mdParser = new MarkdownIt();
 
@@ -80,47 +80,48 @@ export default function EditPage({ params }) {
         return data.url; // Assuming the API returns the image URL in a url field
     };
 
-const mdEditorConfig = {
-    view: {
-        menu: true,
-        md: true,
-        html: true
-    },
-    canView: {
-        menu: true,
-        md: true,
-        html: true,
-        fullScreen: true,
-        hideMenu: true
-    },
-    hooks: {
-        onUnderline: () => {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const underlineText = `<u>${range.toString()}</u>`;
-                const newNode = document.createElement('span');
-                newNode.innerHTML = underlineText;
-                range.deleteContents();
-                range.insertNode(newNode);
+    const mdEditorConfig = {
+        view: {
+            menu: true,
+            md: true,
+            html: true
+        },
+        canView: {
+            menu: true,
+            md: true,
+            html: true,
+            fullScreen: true,
+            hideMenu: true
+        },
+        hooks: {
+            onUnderline: () => {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const underlineText = `<u>${range.toString()}</u>`;
+                    const newNode = document.createElement('span');
+                    newNode.innerHTML = underlineText;
+                    range.deleteContents();
+                    range.insertNode(newNode);
+                }
             }
+        },
+        onImageUpload: async (file) => {
+            try {
+                const imageUrl = await uploadMarkdownImage(file);
+                return imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+                return '';
+            }
+        },
+        onCustomIconClick: {
+            image: () => setIsPopupOpen(true),
+            link: () => setIsPopupOpen(true)
         }
-    },
-    onImageUpload: async (file) => {
-        try {
-            const imageUrl = await uploadMarkdownImage(file);
-            return imageUrl;
-        } catch (error) {
-            console.error('Error uploading image:', error);
-            alert('Failed to upload image. Please try again.');
-            return '';
-        }
-    },
-    onCustomIconClick: {
-        image: () => setIsPopupOpen(true),
-        link: () => setIsPopupOpen(true)
-    }
-};
+    };
+
     useEffect(() => {
         const token = getToken();
         setToken(token);
@@ -240,6 +241,7 @@ const mdEditorConfig = {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMessage(null);
+        setSuccessMessage(null);
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -278,7 +280,14 @@ const mdEditorConfig = {
     };
 
     if (loading) return <p>Loading...</p>;
-    if (errorMessage) return <p>Error: {errorMessage}</p>;
+    if (errorMessage) return (
+        <div className="error-message">
+            {errorMessage}
+            <button className="message-close" onClick={() => setErrorMessage(null)}>
+                <MdClose />
+            </button>
+        </div>
+    );
 
     return (
         <>
@@ -286,8 +295,22 @@ const mdEditorConfig = {
                 <div className="head-title">
                     <h3 className="title">Edit Page: {pageData.name}</h3>
                 </div>
-                {errorMessage && <div className="error-message">{errorMessage}</div>}
-                {successMessage && <div className="success-message">{successMessage}</div>}
+                {errorMessage && (
+                    <div className="error-message">
+                        {errorMessage}
+                        <button className="message-close" onClick={() => setErrorMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="success-message">
+                        {successMessage}
+                        <button className="message-close" onClick={() => setSuccessMessage(null)}>
+                            <MdClose />
+                        </button>
+                    </div>
+                )}
                 <form className="content" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Page Name:</label>
@@ -369,6 +392,21 @@ const mdEditorConfig = {
                     </button>
                 </form>
             </main>
+
+            <style jsx>{`
+                .message-close {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 10px;
+                }
+                
+                .message-close:hover {
+                    opacity: 0.8;
+                }
+            `}</style>
         </>
     );
 }
