@@ -8,7 +8,7 @@ import { useAuth } from '@/app/auth';
 import axios from 'axios';
 import styles from './styles.module.css';
 
-const API_BASE_URL = 'http://ub.mo7tawa.store';
+const API_BASE_URL = 'https://ub.mo7tawa.store';
 
 export default function Users() {
     const [currentPage, setCurrentPage] = useState(1);

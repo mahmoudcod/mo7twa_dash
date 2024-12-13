@@ -41,7 +41,7 @@ export default function CategoryManagement() {
         setLoading(true);
         setErrorMessage(null);
         try {
-            const response = await fetch(`http://ub.mo7tawa.store/api/categories?page=${currentPage}&limit=${pageSize}`, {
+            const response = await fetch(`https://ub.mo7tawa.store/api/categories?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -63,7 +63,7 @@ export default function CategoryManagement() {
             try {
                 await Promise.all(
                     selectedCategories.map((categoryId) =>
-                        fetch(`http://ub.mo7tawa.store/api/categories/${categoryId}`, {
+                        fetch(`https://ub.mo7tawa.store/api/categories/${categoryId}`, {
                             method: 'DELETE',
                             headers: {
                                 Authorization: `Bearer ${token}`,
@@ -83,7 +83,7 @@ export default function CategoryManagement() {
     const deleteCategory = async (categoryId) => {
         if (window.confirm('Are you sure you want to delete this category?')) {
             try {
-                await fetch(`http://ub.mo7tawa.store/api/categories/${categoryId}`, {
+                await fetch(`https://ub.mo7tawa.store/api/categories/${categoryId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${token}`,

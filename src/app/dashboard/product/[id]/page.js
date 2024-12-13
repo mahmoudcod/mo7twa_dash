@@ -30,7 +30,7 @@ export default function EditProduct({ params }) {
                     Authorization: token ? `Bearer ${token}` : '',
                 };
 
-                const productResponse = await fetch(`http://ub.mo7tawa.store/api/products/${params.id}`, {
+                const productResponse = await fetch(`https://ub.mo7tawa.store/api/products/${params.id}`, {
                     headers
                 });
                 if (!productResponse.ok) throw new Error('Failed to fetch product');
@@ -46,12 +46,12 @@ export default function EditProduct({ params }) {
                     pages: normalizedPages
                 });
 
-                const categoryResponse = await fetch('http://ub.mo7tawa.store/api/categories', { headers });
+                const categoryResponse = await fetch('https://ub.mo7tawa.store/api/categories', { headers });
                 if (!categoryResponse.ok) throw new Error('Failed to fetch categories');
                 const categoryData = await categoryResponse.json();
                 setCategories(categoryData.categories || []);
 
-                const pageResponse = await fetch('http://ub.mo7tawa.store/api/pages/all', { headers });
+                const pageResponse = await fetch('https://ub.mo7tawa.store/api/pages/all', { headers });
                 if (!pageResponse.ok) throw new Error('Failed to fetch pages');
                 const pageData = await pageResponse.json();
                 setPages(pageData.pages || []);
@@ -93,7 +93,7 @@ export default function EditProduct({ params }) {
                 category: productData.category
             };
 
-            const response = await fetch(`http://ub.mo7tawa.store/api/products/${params.id}`, {
+            const response = await fetch(`https://ub.mo7tawa.store/api/products/${params.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

@@ -30,14 +30,14 @@ export default function CreateProduct() {
                     Authorization: token ? `Bearer ${token}` : '',
                 };
 
-                const categoryResponse = await fetch('http://ub.mo7tawa.store/api/categories', {
+                const categoryResponse = await fetch('https://ub.mo7tawa.store/api/categories', {
                     headers
                 });
                 if (!categoryResponse.ok) throw new Error('Failed to fetch categories');
                 const categoryData = await categoryResponse.json();
                 setCategories(categoryData.categories);
 
-                const pageResponse = await fetch('http://ub.mo7tawa.store/api/pages/all', {
+                const pageResponse = await fetch('https://ub.mo7tawa.store/api/pages/all', {
                     headers
                 });
                 if (!pageResponse.ok) throw new Error('Failed to fetch pages');
@@ -72,7 +72,7 @@ export default function CreateProduct() {
         setSuccessMessage(null);
 
         try {
-            const response = await fetch('http://ub.mo7tawa.store/api/products', {
+            const response = await fetch('https://ub.mo7tawa.store/api/products', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

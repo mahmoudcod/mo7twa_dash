@@ -47,7 +47,7 @@ export default function Post() {
         setLoading(true);
         setErrorMessage(null);
         try {
-            const response = await fetch(`http://ub.mo7tawa.store/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
+            const response = await fetch(`https://ub.mo7tawa.store/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -66,7 +66,7 @@ export default function Post() {
     const clonePage = async (pageId, pageName) => {
         if (window.confirm(`Are you sure you want to clone "${pageName}"? A copy will be created with "(Copy)" added to its name.`)) {
             try {
-                const response = await fetch(`http://ub.mo7tawa.store/api/pages/${pageId}/clone`, {
+                const response = await fetch(`https://ub.mo7tawa.store/api/pages/${pageId}/clone`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -89,7 +89,7 @@ export default function Post() {
             try {
                 await Promise.all(
                     selectedPosts.map((postId) =>
-                        fetch(`http://ub.mo7tawa.store/api/pages/${postId}`, {
+                        fetch(`https://ub.mo7tawa.store/api/pages/${postId}`, {
                             method: 'DELETE',
                             headers: {
                                 Authorization: `Bearer ${token}`,
@@ -109,7 +109,7 @@ export default function Post() {
     const deletePage = async (pageId, pageName) => {
         if (window.confirm(`Are you sure you want to delete "${pageName}"?`)) {
             try {
-                await fetch(`http://ub.mo7tawa.store/api/pages/${pageId}`, {
+                await fetch(`https://ub.mo7tawa.store/api/pages/${pageId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${token}`,

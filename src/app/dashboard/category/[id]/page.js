@@ -23,10 +23,10 @@ export default function EditCategory({ params }) {
       try {
         const token = getToken();
         const [categoryResponse, pagesResponse] = await Promise.all([
-          fetch(`http://ub.mo7tawa.store/api/categories/${id}`, {
+          fetch(`https://ub.mo7tawa.store/api/categories/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://ub.mo7tawa.store/api/pages/all', {
+          fetch('https://ub.mo7tawa.store/api/pages/all', {
             headers: { Authorization: `Bearer ${token}` },
           })
         ]);
@@ -70,7 +70,7 @@ export default function EditCategory({ params }) {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`http://ub.mo7tawa.store/api/categories/${id}`, {
+      const response = await fetch(`https://ub.mo7tawa.store/api/categories/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
