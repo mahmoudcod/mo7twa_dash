@@ -8,7 +8,7 @@ const AuthContext = createContext();
 
 const axiosWithAuth = (token) => {
     const instance = axios.create({
-        baseURL: 'https://mern-ordring-food-backend.onrender.com/api/auth',
+        baseURL: 'http://ub.mo7tawa.store/api/auth',
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await axios.post('https://mern-ordring-food-backend.onrender.com/api/auth/login', { email, password });
+            const response = await axios.post('http://ub.mo7tawa.store/api/auth/login', { email, password });
             const token = response.data.token;
             if (!token) throw new Error('JWT token not found in response');
             setUser(token);

@@ -22,7 +22,7 @@ export default function CreateCategory() {
         const fetchPages = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
+                const response = await fetch('http://ub.mo7tawa.store/api/pages/all', {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -54,7 +54,7 @@ export default function CreateCategory() {
         setSuccessMessage(null);
 
         try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
+            const response = await fetch('http://ub.mo7tawa.store/api/categories', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

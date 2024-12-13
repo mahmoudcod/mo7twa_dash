@@ -23,10 +23,10 @@ export default function EditCategory({ params }) {
       try {
         const token = getToken();
         const [categoryResponse, pagesResponse] = await Promise.all([
-          fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${id}`, {
+          fetch(`http://ub.mo7tawa.store/api/categories/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
+          fetch('http://ub.mo7tawa.store/api/pages/all', {
             headers: { Authorization: `Bearer ${token}` },
           })
         ]);
@@ -70,7 +70,7 @@ export default function EditCategory({ params }) {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/categories/${id}`, {
+      const response = await fetch(`http://ub.mo7tawa.store/api/categories/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

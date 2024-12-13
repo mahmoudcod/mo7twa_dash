@@ -64,7 +64,7 @@ export default function CreatePage() {
 
         const fetchCategories = async () => {
             try {
-                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
+                const response = await fetch('http://ub.mo7tawa.store/api/categories', {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',
                     },
@@ -142,7 +142,7 @@ export default function CreatePage() {
                 formData.append('image', pageData.image);
             }
 
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages', {
+            const response = await fetch('http://ub.mo7tawa.store/api/pages', {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : '',

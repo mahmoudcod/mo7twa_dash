@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from 'app/auth';
+import { useAuth } from '@/app/auth';
 import { MdClose } from 'react-icons/md';
 import MultiSelect from '@/components/MultiSelect';
 
@@ -30,14 +30,14 @@ export default function CreateProduct() {
                     Authorization: token ? `Bearer ${token}` : '',
                 };
 
-                const categoryResponse = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
+                const categoryResponse = await fetch('http://ub.mo7tawa.store/api/categories', {
                     headers
                 });
                 if (!categoryResponse.ok) throw new Error('Failed to fetch categories');
                 const categoryData = await categoryResponse.json();
                 setCategories(categoryData.categories);
 
-                const pageResponse = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
+                const pageResponse = await fetch('http://ub.mo7tawa.store/api/pages/all', {
                     headers
                 });
                 if (!pageResponse.ok) throw new Error('Failed to fetch pages');
@@ -72,7 +72,7 @@ export default function CreateProduct() {
         setSuccessMessage(null);
 
         try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/products', {
+            const response = await fetch('http://ub.mo7tawa.store/api/products', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

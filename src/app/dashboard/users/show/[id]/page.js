@@ -6,7 +6,7 @@ import { MdClose, MdArrowBack, MdFileDownload, } from 'react-icons/md';
 import ReactMarkdown from 'react-markdown';
 import * as XLSX from 'xlsx';
 
-const API_BASE_URL = 'https://mern-ordring-food-backend.onrender.com';
+const API_BASE_URL = 'http://ub.mo7tawa.store';
 
 const UserDetails = () => {
     const { id } = useParams();

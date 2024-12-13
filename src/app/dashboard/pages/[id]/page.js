@@ -64,7 +64,7 @@ export default function EditPage({ params }) {
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/upload`, {
+        const response = await fetch(`http://ub.mo7tawa.store/api/pages/upload`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -117,7 +117,7 @@ export default function EditPage({ params }) {
             setLoading(true);
             setErrorMessage(null);
             try {
-                const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
+                const response = await fetch(`http://ub.mo7tawa.store/api/pages/${id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',
                     },
@@ -141,7 +141,7 @@ export default function EditPage({ params }) {
 
         const fetchCategories = async () => {
             try {
-                const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
+                const response = await fetch('http://ub.mo7tawa.store/api/categories', {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : '',
                     },
@@ -231,7 +231,7 @@ export default function EditPage({ params }) {
                 formData.append('image', pageData.image);
             }
 
-            const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${id}`, {
+            const response = await fetch(`http://ub.mo7tawa.store/api/pages/${id}`, {
                 method: 'PUT',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : '',

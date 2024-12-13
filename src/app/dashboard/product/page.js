@@ -38,7 +38,7 @@ export default function Products() {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/products?page=${currentPage}&limit=${pageSize}`, {
+            const response = await fetch(`http://ub.mo7tawa.store/api/products?page=${currentPage}&limit=${pageSize}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await response.json();
@@ -53,7 +53,7 @@ export default function Products() {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/categories', {
+            const response = await fetch('http://ub.mo7tawa.store/api/categories', {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -73,7 +73,7 @@ export default function Products() {
 
     const fetchPages = async () => {
         try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/all', {
+            const response = await fetch('http://ub.mo7tawa.store/api/pages/all', {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -121,7 +121,7 @@ export default function Products() {
         if (window.confirm('Are you sure you want to delete selected products?')) {
             try {
                 const deleteRequests = selectedProducts.map((productId) =>
-                    fetch(`https://mern-ordring-food-backend.onrender.com/api/products/${productId}`, {
+                    fetch(`http://ub.mo7tawa.store/api/products/${productId}`, {
                         method: 'DELETE',
                         headers: { Authorization: `Bearer ${token}` },
                     })
@@ -146,7 +146,7 @@ export default function Products() {
     const deleteProduct = async (productId) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
-                const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/products/${productId}`, {
+                const response = await fetch(`http://ub.mo7tawa.store/api/products/${productId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -220,7 +220,6 @@ export default function Products() {
                             <th>Access Period</th>
                             <th>Category</th>
                             <th>Pages</th>
-                            <th>Active Users</th>
                             <th>Settings</th>
                         </tr>
                     </thead>
@@ -244,7 +243,6 @@ export default function Products() {
                                 <td>{item.accessPeriodDays} days</td>
                                 <td>{getCategoryName(item)}</td>
                                 <td>{getPageName(item)}</td>
-                                <td>{item.userAccess?.length || 0}</td>
                                 <td>
                                     <Link href={`/dashboard/product/${item._id}`}>
                                         <MdOutlineEdit style={{ color: '#4D4F5C', fontSize: '20px', transition: 'color 0.3s' }} className="icon" />

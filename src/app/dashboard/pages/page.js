@@ -4,6 +4,7 @@ import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdOutlineEdit, MdDelete, MdC
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { useAuth } from '@/app/auth';
 import Link from 'next/link';
+import Markdown from 'react-markdown';
 
 export default function Post() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -46,7 +47,7 @@ export default function Post() {
         setLoading(true);
         setErrorMessage(null);
         try {
-            const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
+            const response = await fetch(`http://ub.mo7tawa.store/api/pages/all?page=${currentPage}&limit=${pageSize}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -65,7 +66,7 @@ export default function Post() {
     const clonePage = async (pageId, pageName) => {
         if (window.confirm(`Are you sure you want to clone "${pageName}"? A copy will be created with "(Copy)" added to its name.`)) {
             try {
-                const response = await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${pageId}/clone`, {
+                const response = await fetch(`http://ub.mo7tawa.store/api/pages/${pageId}/clone`, {
                     method: 'POST',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -88,7 +89,7 @@ export default function Post() {
             try {
                 await Promise.all(
                     selectedPosts.map((postId) =>
-                        fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${postId}`, {
+                        fetch(`http://ub.mo7tawa.store/api/pages/${postId}`, {
                             method: 'DELETE',
                             headers: {
                                 Authorization: `Bearer ${token}`,
@@ -108,7 +109,7 @@ export default function Post() {
     const deletePage = async (pageId, pageName) => {
         if (window.confirm(`Are you sure you want to delete "${pageName}"?`)) {
             try {
-                await fetch(`https://mern-ordring-food-backend.onrender.com/api/pages/${pageId}`, {
+                await fetch(`http://ub.mo7tawa.store/api/pages/${pageId}`, {
                     method: 'DELETE',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -179,7 +180,6 @@ export default function Post() {
                             </th>
                             <th>Page Name</th>
                             <th>Description</th>
-                            <th>Category</th>
                             <th>Image</th>
                             <th>Settings</th>
                         </tr>
@@ -200,8 +200,7 @@ export default function Post() {
                                     />
                                 </td>
                                 <td>{item.name}</td>
-                                <td>{item.description.slice(0, 100)}</td>
-                                <td>{item.category ? item.category.name : 'N/A'}</td>
+                                <td><Markdown>{item.description.slice(0, 100)}</Markdown></td>
                                 <td>
                                     {item.image && <img src={item.image} alt={item.name} style={{ width: '50px' }} />}
                                 </td>

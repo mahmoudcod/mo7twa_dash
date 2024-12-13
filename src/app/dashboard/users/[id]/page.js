@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
 import { MdClose } from 'react-icons/md';
 
-const API_BASE_URL = 'https://mern-ordring-food-backend.onrender.com';
+const API_BASE_URL = 'http://ub.mo7tawa.store';
 
 export default function EditUser({ params }) {
     const [userData, setUserData] = useState({

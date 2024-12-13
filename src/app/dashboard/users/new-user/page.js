@@ -29,7 +29,7 @@ export default function Register() {
         setSuccessMessage(null);
 
         try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/auth/register', {
+            const response = await fetch('http://ub.mo7tawa.store/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
