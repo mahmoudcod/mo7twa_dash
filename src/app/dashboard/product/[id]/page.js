@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
 import { MdClose } from 'react-icons/md';
+import MultiSelect from '@/components/MultiSelect';
 
 export default function EditProduct({ params }) {
     const [productData, setProductData] = useState({
@@ -67,13 +68,11 @@ export default function EditProduct({ params }) {
         setProductData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handlePagesChange = (e) => {
-        const selectedPages = Array.from(e.target.selectedOptions, option => option.value);
+    const handlePagesChange = (selectedPages) => {
         setProductData(prev => ({ ...prev, pages: selectedPages }));
     };
 
-    const handleCategoryChange = (e) => {
-        const selectedCategories = Array.from(e.target.selectedOptions, option => option.value);
+    const handleCategoryChange = (selectedCategories) => {
         setProductData(prev => ({ ...prev, category: selectedCategories }));
     };
 
@@ -190,37 +189,21 @@ export default function EditProduct({ params }) {
                     </div>
                     <div className="form-group">
                         <label>Pages:</label>
-                        <select
-                            name="pages"
-                            multiple
-                            className="h-32"
-                            value={productData.pages || []}
+                        <MultiSelect
+                            options={pages}
+                            value={productData.pages}
                             onChange={handlePagesChange}
-                            required
-                        >
-                            {pages.map((page) => (
-                                <option key={page._id} value={page._id}>
-                                    {page.name}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select pages..."
+                        />
                     </div>
                     <div className="form-group">
                         <label>Categories:</label>
-                        <select
-                            name="category"
-                            multiple
-                            className="h-32"
-                            value={productData.category || []}
+                        <MultiSelect
+                            options={categories}
+                            value={productData.category}
                             onChange={handleCategoryChange}
-                            required
-                        >
-                            {categories.map((cat) => (
-                                <option key={cat._id} value={cat._id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select categories..."
+                        />
                     </div>
                     <button className="sub-button" type="submit" disabled={loading}>
                         {loading ? 'Updating...' : 'Update Product'}

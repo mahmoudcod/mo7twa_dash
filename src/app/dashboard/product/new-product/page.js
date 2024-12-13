@@ -1,8 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/auth';
+import { useAuth } from 'app/auth';
 import { MdClose } from 'react-icons/md';
+import MultiSelect from '@/components/MultiSelect';
 
 export default function CreateProduct() {
     const [productData, setProductData] = useState({
@@ -55,13 +56,11 @@ export default function CreateProduct() {
         setProductData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    const handlePagesChange = (e) => {
-        const selectedPages = Array.from(e.target.selectedOptions).map(option => option.value);
+    const handlePagesChange = (selectedPages) => {
         setProductData((prevData) => ({ ...prevData, pages: selectedPages }));
     };
 
-    const handleCategoryChange = (e) => {
-        const selectedCategories = Array.from(e.target.selectedOptions).map(option => option.value);
+    const handleCategoryChange = (selectedCategories) => {
         setProductData((prevData) => ({ ...prevData, category: selectedCategories }));
     };
 
@@ -172,37 +171,21 @@ export default function CreateProduct() {
                     </div>
                     <div className="form-group">
                         <label>Pages:</label>
-                        <select
-                            name="pages"
+                        <MultiSelect
+                            options={pages}
                             value={productData.pages}
                             onChange={handlePagesChange}
-                            required
-                            multiple
-                            className="h-32"
-                        >
-                            {pages.map((page) => (
-                                <option key={page._id} value={page._id}>
-                                    {page.name}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select pages..."
+                        />
                     </div>
                     <div className="form-group">
                         <label>Categories:</label>
-                        <select
-                            name="category"
+                        <MultiSelect
+                            options={categories}
                             value={productData.category}
                             onChange={handleCategoryChange}
-                            required
-                            multiple
-                            className="h-32"
-                        >
-                            {categories.map((category) => (
-                                <option key={category._id} value={category._id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select categories..."
+                        />
                     </div>
                     <button className="sub-button" type="submit" disabled={loading}>
                         {loading ? 'Creating...' : 'Create Product'}

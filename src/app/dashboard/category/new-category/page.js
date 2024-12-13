@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
 import { MdClose } from 'react-icons/md';
+import MultiSelect from '@/components/MultiSelect';
 
 export default function CreateCategory() {
     const [categoryData, setCategoryData] = useState({
@@ -28,21 +29,20 @@ export default function CreateCategory() {
                 });
                 if (!response.ok) throw new Error('Failed to fetch pages');
                 const data = await response.json();
-                setAvailablePages(data.pages); // Access the pages array from the response
+                setAvailablePages(data.pages);
             } catch (err) {
                 setErrorMessage("Error fetching pages: " + err.message);
             }
         };
         fetchPages();
-    }, []); // Removed getToken from dependencies as we're using localStorage directly
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCategoryData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    const handlePageSelection = (e) => {
-        const selectedPages = Array.from(e.target.selectedOptions, option => option.value);
+    const handlePageSelection = (selectedPages) => {
         setCategoryData(prevData => ({ ...prevData, pages: selectedPages }));
     };
 
@@ -111,23 +111,12 @@ export default function CreateCategory() {
                     </div>
                     <div className="form-group">
                         <label>Select Pages:</label>
-                        <select
-                            multiple
-                            name="pages"
+                        <MultiSelect
+                            options={availablePages}
                             value={categoryData.pages}
                             onChange={handlePageSelection}
-                            className="h-32"
-                        >
-                            {Array.isArray(availablePages) && availablePages.length > 0 ? (
-                                availablePages.map((page) => (
-                                    <option key={page._id} value={page._id}>
-                                        {page.name}
-                                    </option>
-                                ))
-                            ) : (
-                                <option disabled>No pages available</option>
-                            )}
-                        </select>
+                            placeholder="Select pages..."
+                        />
                     </div>
                     <button className='sub-button' type="submit" disabled={loading}>
                         {loading ? 'Creating...' : 'Create Category'}

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth';
 import { MdClose } from 'react-icons/md';
+import MultiSelect from '@/components/MultiSelect';
 
 export default function EditCategory({ params }) {
   const [categoryData, setCategoryData] = useState({
@@ -50,15 +51,14 @@ export default function EditCategory({ params }) {
     };
 
     fetchCategoryAndPages();
-  }, []);
+  }, [id, getToken]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCategoryData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handlePageSelection = (e) => {
-    const selectedPages = Array.from(e.target.selectedOptions, option => option.value);
+  const handlePageSelection = (selectedPages) => {
     setCategoryData(prevData => ({ ...prevData, pages: selectedPages }));
   };
 
@@ -127,22 +127,12 @@ export default function EditCategory({ params }) {
           </div>
           <div className="form-group">
             <label>Select Pages:</label>
-            <select
-              multiple
-              name="pages"
+            <MultiSelect
+              options={availablePages}
               value={categoryData.pages}
               onChange={handlePageSelection}
-            >
-              {Array.isArray(availablePages) && availablePages.length > 0 ? (
-                availablePages.map((page) => (
-                  <option key={page._id} value={page._id}>
-                    {page.name}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No pages available</option>
-              )}
-            </select>
+              placeholder="Select pages..."
+            />
           </div>
           <button className='sub-button' type="submit" disabled={loading}>
             {loading ? 'Updating...' : 'Update Category'}

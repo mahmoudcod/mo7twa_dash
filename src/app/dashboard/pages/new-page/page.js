@@ -7,6 +7,7 @@ import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import Modal from 'react-modal';
 import { MdClose } from 'react-icons/md';
+import MultiSelect from '@/components/MultiSelect';
 
 const mdParser = new MarkdownIt();
 
@@ -57,67 +58,6 @@ export default function CreatePage() {
     const { getToken } = useAuth();
     const router = useRouter();
 
-    // Separate function for uploading markdown editor images
-    const uploadMarkdownImage = async (file) => {
-        const currentToken = getToken();
-        if (!currentToken) {
-            throw new Error('Authentication token not found');
-        }
-
-        const formData = new FormData();
-        formData.append('image', file);
-
-        try {
-            const response = await fetch('https://mern-ordring-food-backend.onrender.com/api/pages/upload', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${currentToken}`,
-                },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to upload image');
-            }
-
-            const data = await response.json();
-            return data.url;
-        } catch (error) {
-            console.error('Upload error:', error);
-            throw error;
-        }
-    };
-
-    const mdEditorConfig = {
-        view: {
-            menu: true,
-            md: true,
-            html: true
-        },
-        canView: {
-            menu: true,
-            md: true,
-            html: true,
-            fullScreen: true,
-            hideMenu: true
-        },
-        onImageUpload: async (file) => {
-            try {
-                const imageUrl = await uploadMarkdownImage(file);
-                return imageUrl;
-            } catch (error) {
-                console.error('Error uploading image:', error);
-                alert('Failed to upload image: ' + (error.message || 'Unknown error'));
-                return '';
-            }
-        },
-        onCustomIconClick: {
-            image: () => setIsPopupOpen(true),
-            link: () => setIsPopupOpen(true)
-        }
-    };
-
     useEffect(() => {
         const token = getToken();
         setToken(token);
@@ -152,9 +92,8 @@ export default function CreatePage() {
         setPageData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    const handleCategoryChange = (e) => {
-        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-        setPageData((prevData) => ({ ...prevData, category: selectedOptions }));
+    const handleCategoryChange = (selectedCategories) => {
+        setPageData(prevData => ({ ...prevData, category: selectedCategories }));
     };
 
     const handleDescriptionChange = ({ text }) => {
@@ -170,33 +109,6 @@ export default function CreatePage() {
         setPageData((prevData) => ({ ...prevData, status: value }));
     };
 
-    const handleIconClick = () => {
-        setIsPopupOpen(true);
-    };
-
-    const handlePopupSubmit = async ({ url, altText }) => {
-        if (url.startsWith('data:') || url.startsWith('blob:')) {
-            try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
-                const imageUrl = await uploadMarkdownImage(file);
-                url = imageUrl;
-            } catch (error) {
-                console.error('Error uploading image:', error);
-                alert('Failed to upload image. Please try again.');
-                return;
-            }
-        }
-
-        const imageMarkdown = `![${altText}](${url})`;
-        setPageData(prevData => ({
-            ...prevData,
-            description: prevData.description + '\n' + imageMarkdown
-        }));
-    };
-
-    // Validate if page can be published
     const canPublish = () => {
         return pageData.name && 
                pageData.description && 
@@ -204,7 +116,6 @@ export default function CreatePage() {
                pageData.instructions;
     };
 
-    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         const token = getToken();
@@ -212,7 +123,6 @@ export default function CreatePage() {
         setErrorMessage(null);
         setSuccessMessage(null);
 
-        // Validate if trying to publish
         if (pageData.status === 'published' && !canPublish()) {
             setErrorMessage('Cannot publish: Please fill in all required fields');
             setLoading(false);
@@ -294,29 +204,16 @@ export default function CreatePage() {
                             style={{ height: '300px' }}
                             renderHTML={(text) => mdParser.render(text)}
                             onChange={handleDescriptionChange}
-                            config={mdEditorConfig}
-                        />
-                        <LinkImagePopup
-                            isOpen={isPopupOpen}
-                            onRequestClose={() => setIsPopupOpen(false)}
-                            onSubmit={handlePopupSubmit}
                         />
                     </div>
                     <div className="form-group">
                         <label>Categories:</label>
-                        <select
-                            name="categories"
+                        <MultiSelect
+                            options={categories}
                             value={pageData.category}
                             onChange={handleCategoryChange}
-                            required
-                            multiple
-                        >
-                            {categories.map((category) => (
-                                <option key={category._id} value={category._id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Select categories..."
+                        />
                     </div>
                     <div className="form-group">
                         <label>Image:</label>
@@ -324,6 +221,7 @@ export default function CreatePage() {
                             type="file"
                             name="image"
                             onChange={handleImageChange}
+                            accept="image/*"
                         />
                     </div>
                     <div className="form-group" style={{ width: '100%' }}>

@@ -7,6 +7,7 @@ import MdEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
 import Modal from 'react-modal';
 import { MdClose } from 'react-icons/md';
+import MultiSelect from '@/components/MultiSelect';
 
 const mdParser = new MarkdownIt();
 
@@ -59,7 +60,6 @@ export default function EditPage({ params }) {
     const [token, setToken] = useState(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-    // Separate function for uploading markdown editor images
     const uploadMarkdownImage = async (file) => {
         const formData = new FormData();
         formData.append('image', file);
@@ -77,7 +77,7 @@ export default function EditPage({ params }) {
         }
 
         const data = await response.json();
-        return data.url; // Assuming the API returns the image URL in a url field
+        return data.url;
     };
 
     const mdEditorConfig = {
@@ -92,19 +92,6 @@ export default function EditPage({ params }) {
             html: true,
             fullScreen: true,
             hideMenu: true
-        },
-        hooks: {
-            onUnderline: () => {
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    const underlineText = `<u>${range.toString()}</u>`;
-                    const newNode = document.createElement('span');
-                    newNode.innerHTML = underlineText;
-                    range.deleteContents();
-                    range.insertNode(newNode);
-                }
-            }
         },
         onImageUpload: async (file) => {
             try {
@@ -183,18 +170,8 @@ export default function EditPage({ params }) {
         setPageData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    const handleCategoryCheckboxChange = (e, categoryId) => {
-        if (e.target.checked) {
-            setPageData((prevData) => ({
-                ...prevData,
-                category: [...prevData.category, categoryId]
-            }));
-        } else {
-            setPageData((prevData) => ({
-                ...prevData,
-                category: prevData.category.filter((id) => id !== categoryId)
-            }));
-        }
+    const handleCategoryChange = (selectedCategories) => {
+        setPageData(prevData => ({ ...prevData, category: selectedCategories }));
     };
 
     const handleDescriptionChange = ({ text }) => {
@@ -210,10 +187,6 @@ export default function EditPage({ params }) {
 
     const handleStatusChange = (e) => {
         setPageData((prevData) => ({ ...prevData, status: e.target.value }));
-    };
-
-    const handleIconClick = () => {
-        setIsPopupOpen(true);
     };
 
     const handlePopupSubmit = async ({ url, altText }) => {
@@ -336,15 +309,13 @@ export default function EditPage({ params }) {
                             onSubmit={handlePopupSubmit}
                         />
                     </div>
-                    <div className="form-group" style={{ width: '100%' }}>
-                        <label>Boxing Bot:</label>
-                        <textarea
-                            value={pageData.instructions}
-                            name="instructions"
-                            onChange={handleInputChange}
-                            rows="20"
-                            style={{ width: '100%', direction: 'ltr' }}
-                            placeholder="Enter detailed instructions here..."
+                    <div className="form-group">
+                        <label>Categories:</label>
+                        <MultiSelect
+                            options={categories}
+                            value={pageData.category}
+                            onChange={handleCategoryChange}
+                            placeholder="Select categories..."
                         />
                     </div>
                     <div className="form-group">
@@ -357,24 +328,19 @@ export default function EditPage({ params }) {
                         <input
                             type="file"
                             onChange={handleImageChange}
+                            accept="image/*"
                         />
                     </div>
-                    <div className="form-group">
-                        <label>Categories:</label>
-                        <div>
-                            {categories.map((category) => (
-                                <div key={category._id}>
-                                    <input
-                                        type="checkbox"
-                                        id={category._id}
-                                        value={category._id}
-                                        checked={pageData.category.includes(category._id)}
-                                        onChange={(e) => handleCategoryCheckboxChange(e, category._id)}
-                                    />
-                                    <label htmlFor={category._id}>{category.name}</label>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="form-group" style={{ width: '100%' }}>
+                        <label>Boxing Bot:</label>
+                        <textarea
+                            value={pageData.instructions}
+                            name="instructions"
+                            onChange={handleInputChange}
+                            rows="20"
+                            style={{ width: '100%', direction: 'ltr' }}
+                            placeholder="Enter detailed instructions here..."
+                        />
                     </div>
                     <div className="form-group">
                         <label>Status:</label>
@@ -382,6 +348,7 @@ export default function EditPage({ params }) {
                             name="status"
                             value={pageData.status}
                             onChange={handleStatusChange}
+                            className="status-select"
                         >
                             <option value="draft">Draft</option>
                             <option value="published">Published</option>
@@ -394,6 +361,13 @@ export default function EditPage({ params }) {
             </main>
 
             <style jsx>{`
+                .status-select {
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    width: 100%;
+                    margin-top: 5px;
+                }
                 .message-close {
                     background: none;
                     border: none;
