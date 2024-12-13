@@ -93,7 +93,7 @@ const UserDetails = () => {
             ? `User_${id}_AI_Interactions_${startDate || 'start'}_to_${endDate || 'end'}.xlsx`
             : `User_${id}_AI_Interactions.xlsx`;
         XLSX.writeFile(workbook, fileName);
-        setSuccessMessage('تم تصدير البيانات بنجاح');
+        setSuccessMessage('Data exported successfully');
     };
 
     if (loading) return (
@@ -105,12 +105,12 @@ const UserDetails = () => {
     return (
         <main className="user-details-container">
             <div className="user-details-header">
-                <h2 className="user-details-title">تفاصيل المستخدم</h2>
+                <h2 className="user-details-title">User Details</h2>
                 <button 
                     className="back-button" 
                     onClick={() => router.push('/dashboard/users')}
                 >
-                    <MdArrowBack /> رجوع
+                    <MdArrowBack /> Back
                 </button>
             </div>
 
@@ -135,18 +135,18 @@ const UserDetails = () => {
             <div className="content">
                 <div className="user-info">
                     <div className="info-card">
-                        <h3>المعلومات الأساسية</h3>
+                        <h3>Basic Information</h3>
                         <div className="info-grid">
                             <div className="info-item">
-                                <label>البريد الإلكتروني</label>
+                                <label>Email</label>
                                 <p>{user?.email}</p>
                             </div>
                             <div className="info-item">
-                                <label>الهاتف</label>
+                                <label>Phone</label>
                                 <p>{user?.phone}</p>
                             </div>
                             <div className="info-item">
-                                <label>البلد</label>
+                                <label>Country</label>
                                 <p>{user?.country}</p>
                             </div>
                         </div>
@@ -154,11 +154,11 @@ const UserDetails = () => {
                 </div>
                 
                 <div className="filter-section">
-                    <h3>تصفية التفاعلات</h3>
+                    <h3>Filter Interactions</h3>
                     <div className="filter-content">
                         <div className="date-filters">
                             <div className="date-input">
-                                <label>من تاريخ</label>
+                                <label>From Date</label>
                                 <input
                                     type="date"
                                     value={startDate}
@@ -166,7 +166,7 @@ const UserDetails = () => {
                                 />
                             </div>
                             <div className="date-input">
-                                <label>إلى تاريخ</label>
+                                <label>To Date</label>
                                 <input
                                     type="date"
                                     value={endDate}
@@ -176,31 +176,31 @@ const UserDetails = () => {
                         </div>
                         <div className="filter-actions">
                             <div className="results-count">
-                                عدد النتائج: <span>{filteredInteractions.length}</span>
+                                Results Count: <span>{filteredInteractions.length}</span>
                             </div>
                             <button 
                                 className="export-button" 
                                 onClick={exportToExcel}
                                 disabled={!filteredInteractions.length}
                             >
-                                <MdFileDownload /> تصدير إلى Excel
+                                <MdFileDownload /> Export to Excel
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <div className="interactions-section">
-                    <h3>تتبع المخرجات</h3>
+                    <h3>Track Outputs</h3>
                     <div className="ai-interactions">
                         {filteredInteractions.map((ai) => (
                             <div key={ai._id} className="ai-card">
                                 <div className="ai-content">
                                     <div className="ai-input">
-                                        <strong>مدخلات المستخدم</strong>
+                                        <strong>User Input</strong>
                                         <p>{ai.userInput}</p>
                                     </div>
                                     <div className="ai-output">
-                                        <strong>المخرجات</strong>
+                                        <strong>Outputs</strong>
                                           <ReactMarkdown
        
         >{ai.aiOutput}</ReactMarkdown>
@@ -213,7 +213,7 @@ const UserDetails = () => {
                         ))}
                         {filteredInteractions.length === 0 && (
                             <div className="no-results">
-                                لا توجد تفاعلات في الفترة المحددة
+                                No interactions in the selected period
                             </div>
                         )}
                     </div>

@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
             router.push('/dashboard/pages');
         } catch (error) {
             console.error('Login failed:', error);
-            throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.');
+            throw new Error('Login failed');
         }
     };
 

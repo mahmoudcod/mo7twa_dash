@@ -49,10 +49,10 @@ const CreateAdminPage = () => {
                 throw new Error(data.message || 'Error creating admin');
             }
 
-            setSuccessMessage("تم إنشاء المسؤول بنجاح");
+            setSuccessMessage("Admin created successfully");
             router.push('/dashboard');
         } catch (error) {
-            setErrorMessage("خطأ أثناء إنشاء المسؤول: " + error.message);
+            setErrorMessage("Error creating admin: " + error.message);
         } finally {
             setIsLoading(false);
         }
@@ -62,7 +62,7 @@ const CreateAdminPage = () => {
         <>
             <main className="head">
                 <div className="head-title">
-                    <h3 className="title">إنشاء مسؤول جديد</h3>
+                    <h3 className="title">create admin</h3>
                 </div>
 
                 {errorMessage && (
@@ -84,7 +84,7 @@ const CreateAdminPage = () => {
 
                 <form className="content" onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>البريد الإلكتروني:</label>
+                        <label> email:</label>
                         <input
                             type="email"
                             name="email"
@@ -94,7 +94,7 @@ const CreateAdminPage = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>رقم الهاتف:</label>
+                        <label> phone:</label>
                         <input
                             type="text"
                             name="phone"
@@ -104,7 +104,7 @@ const CreateAdminPage = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>الدولة:</label>
+                        <label>country:</label>
                         <input
                             type="text"
                             name="country"
@@ -114,7 +114,7 @@ const CreateAdminPage = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>كلمة المرور:</label>
+                        <label> password:</label>
                         <input
                             type="password"
                             name="password"
@@ -124,7 +124,7 @@ const CreateAdminPage = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>رمز المسؤول السري:</label>
+                        <label>  adminSecret:</label>
                         <input
                             type="password"
                             name="adminSecret"
@@ -134,7 +134,7 @@ const CreateAdminPage = () => {
                         />
                     </div>
                     <button className="sub-button" type="submit" disabled={isLoading}>
-                        {isLoading ? 'جاري الإنشاء...' : 'إنشاء مسؤول'}
+                        {isLoading ? ' Creating...' : ' '}
                     </button>
                 </form>
             </main>

@@ -62,13 +62,13 @@
 }
 
 .login-info button {
+  display: flex;
   width: fit-content;
   border-radius: 4px;
-  padding: 20px;
+  padding: 10px;
   background-color: #0088C6;
   color: white;
   border: none;
-  margin: 10px 0;
 }
 
 @media (max-width: 576px) {

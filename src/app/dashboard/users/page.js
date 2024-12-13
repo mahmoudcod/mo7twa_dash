@@ -138,7 +138,7 @@ export default function Users() {
             setProducts(productsResponse.data.products);
 
         } catch (error) {
-            setErrorMessage("خطأ في جلب المستخدمين: " + error.message);
+            setErrorMessage("Error fetching users: " + error.message);
             console.error(error);
         } finally {
             setLoading(false);
@@ -188,16 +188,16 @@ export default function Users() {
                 })
             );
 
-            setSuccessMessage('تم منح الوصول للمنتج بنجاح');
+            setSuccessMessage('Product access granted successfully');
         } catch (error) {
-            setErrorMessage(`خطأ أثناء منح الوصول للمنتج: ${error.response?.data?.message || error.message}`);
+            setErrorMessage(`Error granting product access: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoadingAccess({ ...loadingAccess, [userId]: false });
         }
     };
 
     const revokeProductAccess = async (userId, productId, productName) => {
-        if (!confirm(`هل أنت متأكد من أنك تريد إلغاء وصول المستخدم إلى ${productName}؟`)) {
+        if (!confirm(`Are you sure you want to revoke user access to ${productName}؟`)) {
             return;
         }
 
@@ -222,9 +222,9 @@ export default function Users() {
                 })
             );
 
-            setSuccessMessage('تم إلغاء الوصول إلى المنتج بنجاح');
+            setSuccessMessage('Product access revoked successfully');
         } catch (error) {
-            setErrorMessage(`خطأ أثناء إلغاء الوصول إلى المنتج: ${error.response?.data?.message || error.message}`);
+            setErrorMessage(`Error revoking product access: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoadingAccess({ ...loadingAccess, [userId]: false });
         }
@@ -251,7 +251,7 @@ export default function Users() {
     return (
         <main className="head">
             <div className="head-title">
-                <h3 className="title">المستخدمين: {totalCount}</h3>
+                <h3 className="title">Users: {totalCount}</h3>
                 <Link href="/dashboard/users/new-user" className="addButton">
                     Add New User
                 </Link>
@@ -278,13 +278,13 @@ export default function Users() {
                 <table className="table">
                     <thead>
                         <tr>
-                            <th>البريد الإلكتروني</th>
-                            <th>رقم الهاتف</th>
-                            <th>الدولة</th>
-                            <th>مؤكد</th>
-                            <th>المنتجات الحالية</th>
-                            <th>إضافة منتج</th>
-                            <th>الإعدادات</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                            <th>Country</th>
+                            <th>Confirmed</th>
+                            <th>Current Products</th>
+                            <th>Add Product</th>
+                            <th>Settings</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -293,7 +293,7 @@ export default function Users() {
                                 <td>{user.email}</td>
                                 <td>{user.phone}</td>
                                 <td>{user.country}</td>
-                                <td>{user.isConfirmed ? 'نعم' : 'لا'}</td>
+                                <td>{user.isConfirmed ? 'Yes' : 'No'}</td>
                                 <td>
                                     <div className={styles.currentProducts}>
                                         {user.productsWithAccess?.map(product => (
@@ -303,7 +303,7 @@ export default function Users() {
                                                 </span>
                                                 <span className={`${styles.statusBadge} ${product.isActive ? styles.activeStatus : styles.inactiveStatus}`}>
                                                     <span className={styles.statusIcon}></span>
-                                                    {product.isActive ? 'نشط' : 'منتهي'}
+                                                    {product.isActive ? 'Active' : 'Expired'}
                                                 </span>
                                                 <button
                                                     onClick={() => revokeProductAccess(user._id, product.productId, product.productName)}
@@ -324,7 +324,7 @@ export default function Users() {
                                             defaultValue=""
                                             className={styles.productSelect}
                                         >
-                                            <option value="">اختر المنتج</option>
+                                            <option value="">Select Product</option>
                                             {products
                                                 .filter(product => !user.productsWithAccess?.some(p => p.productId === product._id))
                                                 .map(product => (

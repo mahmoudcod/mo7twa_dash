@@ -31,10 +31,10 @@ export default function LoginPage() {
 
             <div className="login-info">
                 <div className="login-content">
-                    <p>.مرحبا بعودتك! يرجى تسجيل الدخول إلى حسابك</p>
-                    <input type='text' required value={username} onChange={(e) => setIdentifier(e.target.value)} placeholder="البريد الإلكتروني" />
-                    <input type='password' required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="كلمة المرور" />
-                    <button type="submit" disabled={loading}>{loading ? 'جار التحميل...' : 'تسجيل الدخول'}</button>
+                    <p>Welcome back! Please log in to your account</p>
+                    <input type='text' required value={username} onChange={(e) => setIdentifier(e.target.value)} placeholder="Email" />
+                    <input type='password' required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+                    <button type="submit" disabled={loading}>{loading ? 'Loading...' : 'Log In'}</button>
                     {errorMessage && <p style={{ color: 'red' }} className="error-message">{errorMessage}</p>}
                 </div>
             </div>

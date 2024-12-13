@@ -200,11 +200,11 @@ button.active-filter {
 
 .table th:first-child {
     background-color: #f5f6fa;
-    border-radius: 0px 15px 0 0;
+    border-radius: 15px 0px 0 0;
 }
 
 .table th:last-child {
-    border-radius: 15px 0px 0 0;
+    border-radius: 0px 15px 0 0;
 }
 
 .table thead {
