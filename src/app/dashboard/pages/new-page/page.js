@@ -58,6 +58,55 @@ export default function CreatePage() {
     const { getToken } = useAuth();
     const router = useRouter();
 
+    const uploadMarkdownImage = async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`https://ub.mo7tawa.store/api/pages/upload`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        return data.url;
+    };
+
+    const mdEditorConfig = {
+        view: {
+            menu: true,
+            md: true,
+            html: true
+        },
+        canView: {
+            menu: true,
+            md: true,
+            html: true,
+            fullScreen: true,
+            hideMenu: true
+        },
+        onImageUpload: async (file) => {
+            try {
+                const imageUrl = await uploadMarkdownImage(file);
+                return imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+                return '';
+            }
+        },
+        onCustomIconClick: {
+            image: () => setIsPopupOpen(true),
+            link: () => setIsPopupOpen(true)
+        }
+    };
+
     useEffect(() => {
         const token = getToken();
         setToken(token);
@@ -101,12 +150,37 @@ export default function CreatePage() {
     };
 
     const handleImageChange = (e) => {
-        setPageData((prevData) => ({ ...prevData, image: e.target.files[0] }));
+        const file = e.target.files[0];
+        if (file) {
+            setPageData((prevData) => ({ ...prevData, image: file }));
+        }
     };
 
     const handleStatusChange = (e) => {
         const { value } = e.target;
         setPageData((prevData) => ({ ...prevData, status: value }));
+    };
+
+    const handlePopupSubmit = async ({ url, altText }) => {
+        if (url.startsWith('data:') || url.startsWith('blob:')) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+                const imageUrl = await uploadMarkdownImage(file);
+                url = imageUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+                return;
+            }
+        }
+
+        const imageMarkdown = `![${altText}](${url})`;
+        setPageData(prevData => ({
+            ...prevData,
+            description: prevData.description + '\n' + imageMarkdown
+        }));
     };
 
     const canPublish = () => {
@@ -204,6 +278,12 @@ export default function CreatePage() {
                             style={{ height: '300px' }}
                             renderHTML={(text) => mdParser.render(text)}
                             onChange={handleDescriptionChange}
+                            config={mdEditorConfig}
+                        />
+                        <LinkImagePopup
+                            isOpen={isPopupOpen}
+                            onRequestClose={() => setIsPopupOpen(false)}
+                            onSubmit={handlePopupSubmit}
                         />
                     </div>
                     <div className="form-group">
@@ -215,8 +295,13 @@ export default function CreatePage() {
                             placeholder="Select categories..."
                         />
                     </div>
-                    <div className="form-group">
+                     <div className="form-group">
                         <label>Image:</label>
+                        {pageData.image && typeof pageData.image === 'string' && (
+                            <div>
+                                <img src={pageData.image} alt="Current Page Image" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                            </div>
+                        )}
                         <input
                             type="file"
                             name="image"
