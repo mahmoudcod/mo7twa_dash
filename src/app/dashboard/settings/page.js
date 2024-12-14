@@ -34,7 +34,7 @@ const CreateAdminPage = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8000/api/auth/create-admin', {
+            const response = await fetch('https://dash.mo7tawa.store/api/auth/create-admin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
