@@ -50,7 +50,7 @@ const CreateAdminPage = () => {
             }
 
             setSuccessMessage("Admin created successfully");
-            router.push('/dashboard');
+            router.push('/dashboard/users');
         } catch (error) {
             setErrorMessage("Error creating admin: " + error.message);
         } finally {
