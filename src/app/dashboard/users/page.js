@@ -20,6 +20,7 @@ export default function Users() {
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [loadingAccess, setLoadingAccess] = useState({});
+    const [loadingConfirm, setLoadingConfirm] = useState({});
     const pageSize = 30;
     const [token, setToken] = useState(null);
     const [products, setProducts] = useState([]);
@@ -230,6 +231,41 @@ export default function Users() {
         }
     };
 
+    const handleDeleteUser = async (userId) => {
+        if (!confirm('Are you sure you want to delete this user?')) {
+            return;
+        }
+        try {
+            await axios.delete(`${API_BASE_URL}/api/auth/admin/users/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setUsers(users.filter(user => user._id !== userId));
+            setSuccessMessage('User deleted successfully');
+        } catch (error) {
+            setErrorMessage(`Error deleting user: ${error.response?.data?.message || error.message}`);
+        }
+    };
+
+    const handleConfirmUser = async (userId) => {
+        setLoadingConfirm({ ...loadingConfirm, [userId]: true });
+        try {
+            await axios.post(`${API_BASE_URL}/api/auth/admin/confirm-user/${userId}`, {}, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setUsers(users.map(user => {
+                if (user._id === userId) {
+                    return { ...user, isConfirmed: true };
+                }
+                return user;
+            }));
+            setSuccessMessage('User confirmed successfully');
+        } catch (error) {
+            setErrorMessage(`Error confirming user: ${error.response?.data?.message || error.message}`);
+        } finally {
+            setLoadingConfirm({ ...loadingConfirm, [userId]: false });
+        }
+    };
+
     // Pagination logic
     const totalPages = Math.ceil(totalCount / pageSize);
     const maxPagesToShow = 5;
@@ -338,6 +374,15 @@ export default function Users() {
                                 </td>
                                 <td>
                                     <div className={styles.actions}>
+                                        {!user.isConfirmed && (
+                                            <button
+                                                onClick={() => handleConfirmUser(user._id)}
+                                                className={styles.actionIcon}
+                                                disabled={loadingConfirm[user._id]}
+                                            >
+                                                {loadingConfirm[user._id] ? 'Confirming...' : 'Confirm'}
+                                            </button>
+                                        )}
                                         <RiDeleteBin6Line
                                             onClick={() => handleDeleteUser(user._id)}
                                             className={styles.actionIcon}
