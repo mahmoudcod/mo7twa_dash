@@ -124,11 +124,18 @@ export default function EditPage({ params }) {
                 });
                 if (!response.ok) throw new Error('Failed to fetch page');
                 const data = await response.json();
+                
+                const categoryIds = data.category
+                  ? Array.isArray(data.category)
+                    ? data.category.map((cat) => cat._id)
+                    : [data.category].map((cat) => cat._id)
+                  : [];
+                console.log(data)
                 setPageData({
                     name: data.name,
                     description: data.description,
                     image: data.image,
-                    category: Array.isArray(data.category) ? data.category.map((cat) => cat._id) : [],
+                    category: categoryIds,
                     instructions: data.userInstructions,
                     status: data.status || 'draft'
                 });
@@ -170,8 +177,9 @@ export default function EditPage({ params }) {
         setPageData((prevData) => ({ ...prevData, [name]: value }));
     };
 
-    const handleCategoryChange = (selectedCategories) => {
-        setPageData(prevData => ({ ...prevData, category: selectedCategories }));
+    const handleCategoryChange = (selectedCategoryIds) => {
+        const selectedCategories = categories.filter(cat => selectedCategoryIds.includes(cat._id));
+        setPageData(prevData => ({ ...prevData, category: selectedCategoryIds }));
     };
 
     const handleDescriptionChange = ({ text }) => {

@@ -35,7 +35,6 @@ export default function EditUser({ params }) {
                     Authorization: token ? `Bearer ${token}` : '',
                 };
 
-                // Fetch user details
                 const userResponse = await fetch(`${API_BASE_URL}/api/auth/admin/users/${params.id}`, {
                     headers
                 });
@@ -43,13 +42,11 @@ export default function EditUser({ params }) {
                 const user = await userResponse.json();
                 setUserData(user);
 
-                // Fetch products
                 const productsResponse = await fetch(`${API_BASE_URL}/api/products`, { headers });
                 if (!productsResponse.ok) throw new Error('Failed to fetch products');
                 const productsData = await productsResponse.json();
                 setProducts(productsData.products || []);
 
-                // If user has product access, populate the form with first product's access details
                 if (user.productAccess && user.productAccess.length > 0) {
                     const firstAccess = user.productAccess[0];
                     setSelectedProduct(firstAccess.productId);
@@ -71,7 +68,6 @@ export default function EditUser({ params }) {
         const productId = e.target.value;
         setSelectedProduct(productId);
         
-        // Find existing access for selected product
         const access = userData.productAccess?.find(
             access => access.productId === productId
         );
@@ -83,9 +79,8 @@ export default function EditUser({ params }) {
                 isActive: access.isActive
             });
         } else {
-            // Set default values for new product access
             setProductAccess({
-                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 promptLimit: 0,
                 isActive: true
             });
@@ -134,7 +129,6 @@ export default function EditUser({ params }) {
                 throw new Error(responseData.message || 'Failed to update product access');
             }
 
-            // Update local state to reflect changes
             setUserData(prevData => ({
                 ...prevData,
                 productAccess: prevData.productAccess.map(access => 
@@ -151,7 +145,6 @@ export default function EditUser({ params }) {
 
             setSuccessMessage("Product access updated successfully");
             
-            // Delay redirect to show success message
             setTimeout(() => {
                 router.push('/dashboard/users');
             }, 1500);
@@ -161,6 +154,12 @@ export default function EditUser({ params }) {
             setLoading(false);
         }
     };
+
+    // Get current product access details
+    const currentAccess = selectedProduct ? 
+        userData.productAccess?.find(access => access.productId === selectedProduct) 
+        : null;
+    const selectedProductDetails = products.find(p => p._id === selectedProduct);
 
     return (
         <main className="head">
@@ -185,7 +184,7 @@ export default function EditUser({ params }) {
             )}
             
             <div className="content">
-                <div className="user-info mb-6">
+                <div className="user-info mb-6 bg-white p-4 rounded-lg shadow-sm">
                     <h4 className="text-lg font-bold mb-2">User Information</h4>
                     <p><strong>Email:</strong> {userData.email}</p>
                     <p><strong>Phone:</strong> {userData.phone}</p>
@@ -193,87 +192,90 @@ export default function EditUser({ params }) {
                     <p><strong>Status:</strong> {userData.isConfirmed ? 'Confirmed' : 'Not Confirmed'}</p>
                 </div>
 
-                <form className="settings-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Select Product:</label>
-                        <select
-                            value={selectedProduct}
-                            onChange={handleProductChange}
-                            required
-                            className="w-full p-2 border rounded"
-                        >
-                            <option value="">Choose a product</option>
-                            {products.map((product) => (
-                                <option key={product._id} value={product._id}>
-                                    {product.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <form className="settings-form" onSubmit={handleSubmit}>
+                        <div className="form-group mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Select Product:</label>
+                            <select
+                                value={selectedProduct}
+                                onChange={handleProductChange}
+                                required
+                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Choose a product</option>
+                                {products.map((product) => (
+                                    <option key={product._id} value={product._id}>
+                                        {product.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                    <div className="form-group">
-                        <label>End Date:</label>
-                        <input
-                            type="date"
-                            name="endDate"
-                            value={productAccess.endDate}
-                            onChange={handleAccessChange}
-                            required
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Prompt Limit:</label>
-                        <input
-                            type="number"
-                            name="promptLimit"
-                            value={productAccess.promptLimit}
-                            onChange={handleAccessChange}
-                            min="0"
-                            className="w-full p-2 border rounded"
-                            placeholder="Enter prompt limit"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                name="isActive"
-                                checked={productAccess.isActive}
-                                onChange={handleAccessChange}
-                                className="form-checkbox"
-                            />
-                            Active Access
-                        </label>
-                    </div>
-
-                    <div className="current-settings mt-6">
-                        <h4 className="text-lg font-bold mb-2">Current Product Access</h4>
-                        {userData.productAccess?.map(access => {
-                            const product = products.find(p => p._id === access.productId);
-                            return (
-                                <div key={access.productId} className="border p-4 rounded mb-2">
-                                    <p><strong>Product:</strong> {product?.name || 'Unknown Product'}</p>
-                                    <p><strong>End Date:</strong> {new Date(access.endDate).toLocaleDateString()}</p>
-                                    <p><strong>Prompt Limit:</strong> {access.promptLimit || 0}</p>
-                                    <p><strong>Usage Count:</strong> {access.usageCount || 0}</p>
-                                    <p><strong>Remaining Prompts:</strong> {(access.promptLimit || 0) - (access.usageCount || 0)}</p>
-                                    <p><strong>Status:</strong> {access.isActive ? 'Active' : 'Inactive'}</p>
+                        {selectedProduct && (
+                            <>
+                                <div className="form-group mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date:</label>
+                                    <input
+                                        type="date"
+                                        name="endDate"
+                                        value={productAccess.endDate}
+                                        onChange={handleAccessChange}
+                                        required
+                                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    />
                                 </div>
-                            );
-                        })}
-                    </div>
 
-                    <button 
-                        className="sub-button mt-4" 
-                        type="submit" 
-                        disabled={loading}
-                    >
-                        {loading ? 'Updating...' : 'Update Access'}
-                    </button>
-                </form>
+                                <div className="form-group mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Prompt Limit:</label>
+                                    <input
+                                        type="number"
+                                        name="promptLimit"
+                                        value={productAccess.promptLimit}
+                                        onChange={handleAccessChange}
+                                        min="0"
+                                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter prompt limit"
+                                    />
+                                </div>
+
+                                <div className="form-group mb-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="isActive"
+                                            checked={productAccess.isActive}
+                                            onChange={handleAccessChange}
+                                            className="form-checkbox h-4 w-4 text-blue-600"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Active Access</span>
+                                    </label>
+                                </div>
+
+                                {currentAccess && (
+                                    <div className="current-settings mt-6 p-4 bg-gray-50 rounded-lg">
+                                        <h4 className="text-lg font-bold mb-2">Current Access Details</h4>
+                                        <div className="space-y-2">
+                                            <p><strong>Product:</strong> {selectedProductDetails?.name}</p>
+                                            <p><strong>End Date:</strong> {new Date(currentAccess.endDate).toLocaleDateString()}</p>
+                                            <p><strong>Prompt Limit:</strong> {currentAccess.promptLimit || 0}</p>
+                                            <p><strong>Usage Count:</strong> {currentAccess.usageCount || 0}</p>
+                                            <p><strong>Remaining Prompts:</strong> {(currentAccess.promptLimit || 0) - (currentAccess.usageCount || 0)}</p>
+                                            <p><strong>Status:</strong> {currentAccess.isActive ? 'Active' : 'Inactive'}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        <button 
+                            className="sub-button mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+                            type="submit" 
+                            disabled={loading || !selectedProduct}
+                        >
+                            {loading ? 'Updating...' : 'Update Access'}
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <style jsx>{`
@@ -288,6 +290,14 @@ export default function EditUser({ params }) {
                 
                 .message-close:hover {
                     opacity: 0.8;
+                }
+
+                .error-message {
+                    @apply bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 flex items-center justify-between;
+                }
+
+                .success-message {
+                    @apply bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 flex items-center justify-between;
                 }
             `}</style>
         </main>
