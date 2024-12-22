@@ -16,6 +16,7 @@ export default function EditProduct({ params }) {
     });
     const [pages, setPages] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [categoryPages, setCategoryPages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
@@ -39,11 +40,25 @@ export default function EditProduct({ params }) {
                 const normalizedCategories = product.category ? product.category.map(cat => (typeof cat === 'object' ? cat._id : cat)) : [];
                 const normalizedPages = product.pages ? product.pages.map(page => (typeof page === 'object' ? page._id : page)) : [];
 
+                // Fetch pages for initial categories
+                const pagesInCategories = new Set();
+                await Promise.all(normalizedCategories.map(async (categoryId) => {
+                    const categoryResponse = await fetch(`https://ub.mo7tawa.store/api/categories/${categoryId}`, { headers });
+                    if (categoryResponse.ok) {
+                        const data = await categoryResponse.json();
+                        if (data.pages) {
+                            data.pages.forEach(page => pagesInCategories.add(typeof page === 'object' ? page._id : page));
+                        }
+                    }
+                }));
+
+                setCategoryPages(Array.from(pagesInCategories));
+
                 setProductData({
                     ...product,
                     accessPeriodDays: product.accessPeriodDays || 30,
                     category: normalizedCategories,
-                    pages: normalizedPages
+                    pages: normalizedPages.filter(pageId => !pagesInCategories.has(pageId))
                 });
 
                 const categoryResponse = await fetch('https://ub.mo7tawa.store/api/categories', { headers });
@@ -72,8 +87,37 @@ export default function EditProduct({ params }) {
         setProductData(prev => ({ ...prev, pages: selectedPages }));
     };
 
-    const handleCategoryChange = (selectedCategories) => {
+    const handleCategoryChange = async (selectedCategories) => {
         setProductData(prev => ({ ...prev, category: selectedCategories }));
+        
+        try {
+            const token = localStorage.getItem('token');
+            const headers = {
+                Authorization: token ? `Bearer ${token}` : '',
+            };
+
+            // Fetch pages for all selected categories
+            const pagesInCategories = new Set();
+            await Promise.all(selectedCategories.map(async (categoryId) => {
+                const response = await fetch(`https://ub.mo7tawa.store/api/categories/${categoryId}`, { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.pages) {
+                        data.pages.forEach(page => pagesInCategories.add(typeof page === 'object' ? page._id : page));
+                    }
+                }
+            }));
+
+            setCategoryPages(Array.from(pagesInCategories));
+
+            // Remove any selected pages that are now in the selected categories
+            setProductData(prev => ({
+                ...prev,
+                pages: prev.pages.filter(pageId => !pagesInCategories.has(pageId))
+            }));
+        } catch (error) {
+            console.error('Error fetching category pages:', error);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -190,7 +234,7 @@ export default function EditProduct({ params }) {
                     <div className="form-group">
                         <label>Pages:</label>
                         <MultiSelect
-                            options={pages}
+                            options={pages.filter(page => !categoryPages.includes(page._id))}
                             value={productData.pages}
                             onChange={handlePagesChange}
                             placeholder="Select pages..."
