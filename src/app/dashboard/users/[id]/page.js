@@ -145,9 +145,6 @@ export default function EditUser({ params }) {
 
             setSuccessMessage("Product access updated successfully");
             
-            setTimeout(() => {
-                router.push('/dashboard/users');
-            }, 1500);
         } catch (err) {
             setErrorMessage("Error updating product access: " + err.message);
         } finally {

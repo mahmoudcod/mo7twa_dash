@@ -84,7 +84,6 @@ export default function EditCategory({ params }) {
       }
 
       setSuccessMessage("Category updated successfully");
-      router.push('/dashboard/category');
     } catch (err) {
       setErrorMessage("Error updating the category: " + err.message);
     } finally {

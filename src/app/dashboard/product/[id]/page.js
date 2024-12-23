@@ -152,7 +152,6 @@ export default function EditProduct({ params }) {
             }
 
             setSuccessMessage("Product updated successfully");
-            router.push('/dashboard/product');
         } catch (err) {
             setErrorMessage("Error updating the product: " + err.message);
         } finally {

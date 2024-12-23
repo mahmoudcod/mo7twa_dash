@@ -252,7 +252,6 @@ export default function EditPage({ params }) {
             }
 
             setSuccessMessage('Page updated successfully');
-            router.push('/dashboard/pages');
         } catch (err) {
             setErrorMessage('Error updating the page: ' + err.message);
         } finally {
